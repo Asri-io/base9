@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function ShopPage() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { data: products } = await supabase
     .from("products")

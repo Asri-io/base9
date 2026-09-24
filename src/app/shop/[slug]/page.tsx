@@ -7,10 +7,10 @@ import { notFound } from "next/navigation";
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }) {
-  const { slug } = await params;
-  const supabase = await createClient();
+  const { slug } = params;
+  const supabase = createClient();
 
   const { data: product } = await supabase
     .from("products")

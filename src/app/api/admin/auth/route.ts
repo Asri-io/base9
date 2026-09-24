@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   cookieStore.set("base9_admin", "authenticated", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   cookieStore.delete("base9_admin");
   return NextResponse.json({ success: true });
 }

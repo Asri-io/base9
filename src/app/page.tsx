@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { data: featuredProducts } = await supabase
     .from("products")
