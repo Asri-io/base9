@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createMutationClient } from "@/lib/supabase/client";
 import { X, Upload } from "lucide-react";
 import type { Database } from "@/types/database";
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function ProductForm({ product, onClose, onSave }: Props) {
-  const supabase = createClient();
+  const supabase = createMutationClient();
   const [loading, setLoading]           = useState(false);
   const [uploadingFront, setUploadingFront] = useState(false);
   const [uploadingBack, setUploadingBack]   = useState(false);

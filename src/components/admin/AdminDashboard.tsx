@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, createMutationClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/currency";
 import {
   Plus, Package, ShoppingBag, LogOut, Edit,
@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [viewOrder, setViewOrder]     = useState<Order | null>(null);
   const [loading, setLoading]         = useState(true);
   const supabase = createClient();
+  const db = createMutationClient();
 
   useEffect(() => { fetchData(); }, []);
 
@@ -46,18 +47,18 @@ export default function AdminDashboard() {
   };
 
   const togglePublish = async (p: Product) => {
-    await supabase.from("products").update({ is_published: !p.is_published }).eq("id", p.id);
+    await db.from("products").update({ is_published: !p.is_published }).eq("id", p.id);
     fetchData();
   };
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Delete this product? This cannot be undone.")) return;
-    await supabase.from("products").delete().eq("id", id);
+    await db.from("products").delete().eq("id", id);
     fetchData();
   };
 
   const toggleDesignActive = async (d: Design) => {
-    await supabase.from("designs").update({ is_active: !d.is_active }).eq("id", d.id);
+    await db.from("designs").update({ is_active: !d.is_active }).eq("id", d.id);
     fetchData();
   };
 
@@ -68,7 +69,7 @@ export default function AdminDashboard() {
   };
 
   const updateOrderStatus = async (id: string, status: string) => {
-    await supabase.from("orders").update({ status }).eq("id", id);
+    await db.from("orders").update({ status }).eq("id", id);
     fetchData();
   };
 

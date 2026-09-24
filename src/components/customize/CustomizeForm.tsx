@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, createMutationClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/currency";
 import { Upload, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import type { Database } from "@/types/database";
@@ -18,6 +18,7 @@ const PRICES: Record<string, number> = {
 
 export default function CustomizeForm() {
   const supabase = createClient();
+  const db = createMutationClient();
 
   // Step: 1 = garment + details, 2 = design, 3 = contact + confirm
   const [step, setStep]           = useState(1);
@@ -68,9 +69,9 @@ export default function CustomizeForm() {
     if (designMode === "upload" && designFile) {
       const ext      = designFile.name.split(".").pop();
       const fileName = `custom-${Date.now()}.${ext}`;
-      const { data } = await supabase.storage.from("custom-designs").upload(fileName, designFile, { upsert: true });
+      const { data } = await db.storage.from("custom-designs").upload(fileName, designFile, { upsert: true });
       if (data) {
-        const { data: u } = supabase.storage.from("custom-designs").getPublicUrl(data.path);
+        const { data: u } = db.storage.from("custom-designs").getPublicUrl(data.path);
         customDesignUrl = u.publicUrl;
       }
     } else if (designMode === "pick" && selectedDesign) {
@@ -78,7 +79,7 @@ export default function CustomizeForm() {
       selectedDesignUrl = selectedDesign.image_url;
     }
 
-    await supabase.from("orders").insert({
+    await db.from("orders").insert({
       customer_name:        form.name,
       customer_email:       form.email,
       customer_phone:       form.phone || null,

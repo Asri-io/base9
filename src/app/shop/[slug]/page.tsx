@@ -2,15 +2,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductDetail from "@/components/shop/ProductDetail";
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
 
 export default async function ProductPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
-  const supabase = createClient();
+  const { slug } = await params;
+  const supabase = await createClient();
 
   const { data: product } = await supabase
     .from("products")
@@ -19,12 +18,11 @@ export default async function ProductPage({
     .eq("is_published", true)
     .single();
 
-  // Use placeholder if no DB product yet
   const displayProduct = product ?? {
     id: slug,
     slug,
     name: "Custom Piece",
-    price: 85,
+    price: 15000,
     category: "T-Shirts",
     front_image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&q=90",
     back_image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800&q=90",

@@ -8,12 +8,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set("base9_admin", "authenticated", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 60 * 60 * 24, // 24 hours
+    maxAge: 60 * 60 * 24,
     path: "/",
   });
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.delete("base9_admin");
   return NextResponse.json({ success: true });
 }
