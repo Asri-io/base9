@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShoppingBag, Menu, X } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { formatPrice } from "@/lib/currency";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -57,7 +58,7 @@ export default function Navbar() {
             <Link href="/cart">
               <button className="flex items-center gap-2 bg-base9-black text-base9-white px-4 py-2 rounded-full text-sm font-medium hover:bg-base9-red transition-colors duration-200">
                 <ShoppingBag size={14} />
-                <span>${totalPrice.toFixed(0)}</span>
+                <span>{formatPrice(totalPrice)}</span>
                 {itemCount > 0 && (
                   <span className="bg-base9-red text-white text-xs w-4 h-4 rounded-full flex items-center justify-center -ml-1">
                     {itemCount}

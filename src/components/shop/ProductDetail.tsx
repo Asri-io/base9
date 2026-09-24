@@ -4,6 +4,7 @@ import { useState, Suspense, lazy } from "react";
 import Image from "next/image";
 import { RotateCcw, ShoppingBag, Box } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { formatPrice } from "@/lib/currency";
 import type { Database } from "@/types/database";
 
 type Product = Database["public"]["Tables"]["products"]["Row"];
@@ -115,7 +116,7 @@ export default function ProductDetail({ product }: { product: Product }) {
                 {product.category}
               </p>
               <h1 className="text-3xl font-bold text-base9-black mb-3">{product.name}</h1>
-              <p className="text-2xl font-light text-base9-gray-500">${product.price}</p>
+              <p className="text-2xl font-light text-base9-gray-500">{formatPrice(product.price)}</p>
             </div>
 
             {product.description && (

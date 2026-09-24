@@ -46,7 +46,6 @@ export interface Database {
         };
         Update: {
           id?: string;
-          created_at?: string;
           name?: string;
           description?: string | null;
           price?: number;
@@ -62,6 +61,37 @@ export interface Database {
           slug?: string;
         };
       };
+      designs: {
+        Row: {
+          id: string;
+          created_at: string;
+          name: string;
+          description: string | null;
+          image_url: string;
+          category: string;
+          tags: string[];
+          is_active: boolean;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          name: string;
+          description?: string | null;
+          image_url: string;
+          category?: string;
+          tags?: string[];
+          is_active?: boolean;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          image_url?: string;
+          category?: string;
+          tags?: string[];
+          is_active?: boolean;
+        };
+      };
       orders: {
         Row: {
           id: string;
@@ -69,11 +99,15 @@ export interface Database {
           customer_name: string;
           customer_email: string;
           customer_phone: string | null;
+          whatsapp: string | null;
+          address: string | null;
           items: Json;
           total: number;
           status: string;
           notes: string | null;
           custom_design_url: string | null;
+          selected_design_id: string | null;
+          selected_design_url: string | null;
         };
         Insert: {
           id?: string;
@@ -81,23 +115,30 @@ export interface Database {
           customer_name: string;
           customer_email: string;
           customer_phone?: string | null;
+          whatsapp?: string | null;
+          address?: string | null;
           items: Json;
           total: number;
           status?: string;
           notes?: string | null;
           custom_design_url?: string | null;
+          selected_design_id?: string | null;
+          selected_design_url?: string | null;
         };
         Update: {
           id?: string;
-          created_at?: string;
           customer_name?: string;
           customer_email?: string;
           customer_phone?: string | null;
+          whatsapp?: string | null;
+          address?: string | null;
           items?: Json;
           total?: number;
           status?: string;
           notes?: string | null;
           custom_design_url?: string | null;
+          selected_design_id?: string | null;
+          selected_design_url?: string | null;
         };
       };
       site_settings: {
@@ -114,7 +155,6 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          id?: string;
           key?: string;
           value?: string;
           updated_at?: string;

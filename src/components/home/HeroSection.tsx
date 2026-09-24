@@ -4,10 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, RotateCcw } from "lucide-react";
+import { formatPrice } from "@/lib/currency";
 
 const heroProduct = {
   name: "Custom Bomber Jacket",
-  price: 285,
+  price: 55000,
   front: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=90",
   back: "https://images.unsplash.com/photo-1594938298603-c8148c4b4267?w=800&q=90",
   lining: "100% Polyester",
@@ -42,7 +43,7 @@ export default function HeroSection() {
                 {heroProduct.name}
               </h1>
               <p className="text-3xl font-light text-base9-gray-400 mt-2">
-                ${heroProduct.price}
+                {formatPrice(heroProduct.price)}
               </p>
             </div>
 
