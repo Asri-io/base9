@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function AnnouncementBar() {
   return (
-    <div className="bg-base9-red text-base9-white py-2.5 px-6 text-center">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-base9-red text-base9-white py-2.5 px-6 text-center">
       <p className="text-xs tracking-widest uppercase">
         <span className="opacity-75">Hoodies dropping soon —</span>{" "}
         <Link href="/bulk-orders" className="underline underline-offset-2 hover:opacity-80 transition-opacity font-medium">

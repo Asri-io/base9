@@ -44,7 +44,7 @@ export default function HeroSection({ product, label = "Featured Drop" }: Props)
   ];
 
   return (
-    <section className="min-h-screen bg-base9-gray-100 relative overflow-hidden pt-16">
+    <section className="min-h-screen bg-base9-gray-100 relative overflow-hidden pt-[104px]">
       {/* Background grid texture */}
       <div
         className="absolute inset-0 opacity-[0.03]"
@@ -55,7 +55,7 @@ export default function HeroSection({ product, label = "Featured Drop" }: Props)
       />
 
       <div className="max-w-7xl mx-auto px-6 lg:px-12 h-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-4rem)] items-center gap-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-104px)] items-center gap-8 py-12">
 
           {/* Left — product info */}
           <div className="lg:col-span-4 animate-fade-up">
