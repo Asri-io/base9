@@ -46,8 +46,10 @@ export default function AdminDashboard() {
     setProducts(prodRes.data ?? []);
     setOrders(ordRes.data ?? []);
     setDesigns(desRes.data ?? []);
-    const heroId = setRes.data?.find(s => s.key === "hero_product_id")?.value ?? "";
-    const label  = setRes.data?.find(s => s.key === "hero_label")?.value ?? "Featured Drop";
+    type Setting = { key: string; value: string };
+    const settingsList = (setRes.data ?? []) as Setting[];
+    const heroId = settingsList.find(s => s.key === "hero_product_id")?.value ?? "";
+    const label  = settingsList.find(s => s.key === "hero_label")?.value ?? "Featured Drop";
     setHeroProductId(heroId);
     setHeroLabel(label);
     setLoading(false);

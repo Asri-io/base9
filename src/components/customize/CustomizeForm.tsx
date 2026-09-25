@@ -12,7 +12,6 @@ type DesignMode = "pick" | "upload";
 
 const PRICES: Record<string, number> = {
   "T-Shirt": 15000,
-  "Hoodie":  25000,
   "Jacket":  55000,
 };
 

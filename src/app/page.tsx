@@ -29,8 +29,10 @@ export default async function Home() {
   ]);
 
   // Find which product is set as the hero
-  const heroId = settings?.find(s => s.key === "hero_product_id")?.value ?? "";
-  const heroLabel = settings?.find(s => s.key === "hero_label")?.value ?? "Featured Drop";
+  type Setting = { key: string; value: string };
+  const settingsList = (settings ?? []) as Setting[];
+  const heroId = settingsList.find(s => s.key === "hero_product_id")?.value ?? "";
+  const heroLabel = settingsList.find(s => s.key === "hero_label")?.value ?? "Featured Drop";
 
   let heroProduct: Product | null = null;
 
