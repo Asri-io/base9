@@ -1,6 +1,8 @@
 import Navbar from "@/components/Navbar";
+import AnnouncementBar from "@/components/home/AnnouncementBar";
 import HeroSection from "@/components/home/HeroSection";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
+import PromoStrip from "@/components/home/PromoStrip";
 import HowItWorks from "@/components/home/HowItWorks";
 import Testimonials from "@/components/home/Testimonials";
 import Footer from "@/components/Footer";
@@ -52,9 +54,11 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-base9-white">
+      <AnnouncementBar />
       <Navbar />
       <HeroSection product={heroProduct} label={heroLabel} />
       <FeaturedProducts products={featuredProducts ?? []} />
+      <PromoStrip />
       <HowItWorks />
       <Testimonials />
       <Footer />

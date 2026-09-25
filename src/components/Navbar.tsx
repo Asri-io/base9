@@ -40,6 +40,7 @@ export default function Navbar() {
             {[
               { label: "SHOP", href: "/shop" },
               { label: "CUSTOMIZE", href: "/customize" },
+              { label: "LOOKBOOK", href: "/lookbook" },
               { label: "ABOUT", href: "/about" },
               { label: "CONTACT", href: "/contact" },
             ].map((link) => (
@@ -85,6 +86,7 @@ export default function Navbar() {
           {[
             { label: "SHOP", href: "/shop" },
             { label: "CUSTOMIZE", href: "/customize" },
+            { label: "LOOKBOOK", href: "/lookbook" },
             { label: "ABOUT", href: "/about" },
             { label: "CONTACT", href: "/contact" },
           ].map((link) => (

@@ -6,6 +6,7 @@ import { RotateCcw, ShoppingBag, Box } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { formatPrice } from "@/lib/currency";
 import type { Database } from "@/types/database";
+import SizeGuide from "@/components/SizeGuide";
 
 type Product = Database["public"]["Tables"]["products"]["Row"];
 
@@ -149,9 +150,12 @@ export default function ProductDetail({ product }: { product: Product }) {
 
             {/* Size selection */}
             <div>
-              <p className="text-[10px] tracking-ultra-wide text-base9-gray-400 uppercase mb-3">
-                Size — <span className="text-base9-black">{selectedSize}</span>
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] tracking-ultra-wide text-base9-gray-400 uppercase">
+                  Size — <span className="text-base9-black">{selectedSize}</span>
+                </p>
+                <SizeGuide />
+              </div>
               <div className="flex gap-2 flex-wrap">
                 {product.sizes.map((size) => (
                   <button
@@ -175,7 +179,7 @@ export default function ProductDetail({ product }: { product: Product }) {
                 { label: "Material", value: "100% Premium Cotton" },
                 { label: "Print Method", value: "DTG / Screen Print" },
                 { label: "Lead Time", value: "5–7 Business Days" },
-                { label: "Shipping", value: "Free over $150" },
+                { label: "Shipping", value: "Free over ₦50,000" },
               ].map((spec) => (
                 <div key={spec.label} className="flex items-center justify-between">
                   <span className="text-xs tracking-wide text-base9-gray-400 uppercase">

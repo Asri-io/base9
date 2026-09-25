@@ -26,6 +26,8 @@ export default function Footer() {
               {[
                 { label: "Shop", href: "/shop" },
                 { label: "Customize", href: "/customize" },
+                { label: "Lookbook", href: "/lookbook" },
+                { label: "Bulk Orders", href: "/bulk-orders" },
                 { label: "About", href: "/about" },
                 { label: "Contact", href: "/contact" },
               ].map((l) => (
