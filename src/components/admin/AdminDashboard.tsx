@@ -22,6 +22,9 @@ export default function AdminDashboard() {
   const [products, setProducts]   = useState<Product[]>([]);
   const [orders, setOrders]       = useState<Order[]>([]);
   const [designs, setDesigns]     = useState<Design[]>([]);
+  const [heroProductId, setHeroProductId] = useState("");
+  const [heroLabel, setHeroLabel]         = useState("Featured Drop");
+  const [settingsSaved, setSettingsSaved] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showDesignForm, setShowDesignForm]   = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -34,15 +37,29 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [prodRes, ordRes, desRes] = await Promise.all([
+    const [prodRes, ordRes, desRes, setRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("designs").select("*").order("created_at", { ascending: false }),
+      supabase.from("site_settings").select("key, value"),
     ]);
     setProducts(prodRes.data ?? []);
     setOrders(ordRes.data ?? []);
     setDesigns(desRes.data ?? []);
+    const heroId = setRes.data?.find(s => s.key === "hero_product_id")?.value ?? "";
+    const label  = setRes.data?.find(s => s.key === "hero_label")?.value ?? "Featured Drop";
+    setHeroProductId(heroId);
+    setHeroLabel(label);
     setLoading(false);
+  };
+
+  const saveHeroSettings = async () => {
+    await Promise.all([
+      fetch("/api/admin/settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "hero_product_id", value: heroProductId }) }),
+      fetch("/api/admin/settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "hero_label", value: heroLabel }) }),
+    ]);
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 3000);
   };
 
   const togglePublish = async (p: Product) => {
@@ -370,39 +387,144 @@ export default function AdminDashboard() {
 
         {/* ── SETTINGS TAB ── */}
         {tab === "settings" && (
-          <div className="max-w-lg">
-            <h2 className="text-lg font-bold text-base9-black mb-6">Settings</h2>
-            <div className="bg-base9-white border border-base9-gray-200 p-6 space-y-4">
+          <div className="max-w-2xl space-y-8">
+            <div>
+              <h2 className="text-lg font-bold text-base9-black mb-1">Homepage Hero</h2>
+              <p className="text-xs text-base9-gray-400 mb-6">
+                Choose which product appears in the main hero section on the homepage.
+                The product&apos;s front and back images, name, and price will show automatically.
+              </p>
+            </div>
+
+            {/* Hero product picker */}
+            <div className="bg-base9-white border border-base9-gray-200 p-6 space-y-5">
               <div>
-                <p className="text-xs font-medium text-base9-black mb-1">Custom Domain</p>
-                <p className="text-xs text-base9-gray-400 leading-relaxed">
-                  To get a clean URL like <strong>base9.com</strong>, buy the domain from Namecheap or GoDaddy, then add it in your{" "}
-                  <a href="https://vercel.com/asri-ios-projects/base9-store/settings/domains" target="_blank" className="text-base9-red hover:underline">
-                    Vercel project settings → Domains
-                  </a>.
-                  Your current URL is:{" "}
-                  <a href="https://base9-store.vercel.app" target="_blank" className="text-base9-red hover:underline">
-                    base9-store.vercel.app
-                  </a>
-                </p>
+                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-2">
+                  Section Label (shown above the product name)
+                </label>
+                <input
+                  type="text"
+                  value={heroLabel}
+                  onChange={e => setHeroLabel(e.target.value)}
+                  className="w-full border border-base9-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:border-base9-black"
+                  placeholder="e.g. Featured Drop, New Arrival, Best Seller"
+                />
               </div>
-              <div className="border-t border-base9-gray-200 pt-4">
-                <p className="text-xs font-medium text-base9-black mb-1">Admin Password</p>
-                <p className="text-xs text-base9-gray-400">Change via Vercel → Environment Variables → <code>ADMIN_PASSWORD</code></p>
+
+              <div>
+                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-2">
+                  Hero Product
+                </label>
+                {products.filter(p => p.is_published).length === 0 ? (
+                  <p className="text-xs text-base9-gray-400 py-3">
+                    No published products yet. Add and publish a product first.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {/* None option */}
+                    <button
+                      type="button"
+                      onClick={() => setHeroProductId("")}
+                      className={`border p-3 text-left transition-all ${
+                        heroProductId === ""
+                          ? "border-base9-black bg-base9-black text-base9-white"
+                          : "border-base9-gray-200 hover:border-base9-gray-400"
+                      }`}
+                    >
+                      <p className="text-xs font-medium">Default</p>
+                      <p className={`text-[10px] mt-0.5 ${heroProductId === "" ? "text-base9-gray-300" : "text-base9-gray-400"}`}>
+                        Use hardcoded fallback
+                      </p>
+                    </button>
+
+                    {products.filter(p => p.is_published).map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setHeroProductId(p.id)}
+                        className={`border relative text-left transition-all overflow-hidden ${
+                          heroProductId === p.id
+                            ? "border-base9-red"
+                            : "border-base9-gray-200 hover:border-base9-gray-400"
+                        }`}
+                      >
+                        {p.front_image && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.front_image} alt={p.name} className="w-full h-24 object-cover" />
+                        )}
+                        <div className="p-2">
+                          <p className="text-xs font-medium text-base9-black truncate">{p.name}</p>
+                          <p className="text-[10px] text-base9-gray-400">{formatPrice(p.price)}</p>
+                        </div>
+                        {heroProductId === p.id && (
+                          <div className="absolute top-2 right-2 bg-base9-red text-white text-[9px] px-1.5 py-0.5 uppercase tracking-wider">
+                            Hero
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="border-t border-base9-gray-200 pt-4">
-                <p className="text-xs font-medium text-base9-black mb-1">Storage Buckets Needed</p>
-                <p className="text-xs text-base9-gray-400 leading-relaxed">
-                  Create these in{" "}
-                  <a href="https://supabase.com/dashboard/project/fkjuyeofakbcssllfacw/storage/buckets" target="_blank" className="text-base9-red hover:underline">
-                    Supabase → Storage
-                  </a>:
-                </p>
-                <ul className="text-xs text-base9-gray-400 mt-2 space-y-1 list-disc pl-4">
-                  <li><code>product-images</code> — Public bucket</li>
-                  <li><code>design-library</code> — Public bucket</li>
-                  <li><code>custom-designs</code> — Private bucket</li>
-                </ul>
+
+              {/* Preview of selected */}
+              {heroProductId && products.find(p => p.id === heroProductId) && (() => {
+                const p = products.find(p => p.id === heroProductId)!;
+                return (
+                  <div className="border border-base9-gray-200 p-4 bg-base9-gray-100">
+                    <p className="text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-3">Preview</p>
+                    <div className="flex gap-4 items-center">
+                      {p.front_image && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.front_image} alt={p.name} className="w-16 h-20 object-cover" />
+                      )}
+                      <div>
+                        <p className="text-[10px] text-base9-gray-400 uppercase tracking-widest">{heroLabel}</p>
+                        <p className="text-base font-bold text-base9-black mt-1">{p.name}</p>
+                        <p className="text-sm text-base9-gray-500 mt-0.5">{formatPrice(p.price)}</p>
+                        <p className="text-xs text-base9-gray-400 mt-1">
+                          Front image: {p.front_image ? "✓" : "✗ missing"} · Back image: {p.back_image ? "✓" : "✗ missing"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <button
+                onClick={saveHeroSettings}
+                className="bg-base9-black text-base9-white px-6 py-3 text-xs tracking-ultra-wide uppercase hover:bg-base9-red transition-colors"
+              >
+                {settingsSaved ? "✓ Saved!" : "Save Hero Settings"}
+              </button>
+            </div>
+
+            {/* Other settings */}
+            <div className="bg-base9-white border border-base9-gray-200 p-6 space-y-4">
+              <h3 className="text-sm font-bold text-base9-black">Other Settings</h3>
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-base9-black">Custom Domain</p>
+                    <p className="text-xs text-base9-gray-400 mt-0.5 leading-relaxed">
+                      Buy <strong>base9.com.ng</strong> or <strong>base9.co</strong>, then add it in{" "}
+                      <a href="https://vercel.com/asri-ios-projects/base9-store/settings/domains" target="_blank" className="text-base9-red hover:underline">
+                        Vercel → Domains
+                      </a>
+                    </p>
+                  </div>
+                </div>
+                <div className="border-t border-base9-gray-200 pt-3 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-base9-black">Change Admin Password</p>
+                    <p className="text-xs text-base9-gray-400 mt-0.5">
+                      Update <code>ADMIN_PASSWORD</code> in{" "}
+                      <a href="https://vercel.com/asri-ios-projects/base9-store/settings/environment-variables" target="_blank" className="text-base9-red hover:underline">
+                        Vercel → Environment Variables
+                      </a>
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

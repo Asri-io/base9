@@ -5,19 +5,43 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, RotateCcw } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
+import type { Database } from "@/types/database";
 
-const heroProduct = {
+type Product = Database["public"]["Tables"]["products"]["Row"];
+
+// Fallback shown when no hero product is set in admin
+const FALLBACK = {
   name: "Custom Bomber Jacket",
   price: 55000,
-  front: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=90",
-  back: "https://images.unsplash.com/photo-1594938298603-c8148c4b4267?w=800&q=90",
-  lining: "100% Polyester",
-  size: "Available S–XXL",
-  material: "Premium Fabric",
+  front_image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=90",
+  back_image:  "https://images.unsplash.com/photo-1594938298603-c8148c4b4267?w=800&q=90",
+  sizes:       ["S", "M", "L", "XL", "XXL"],
+  slug:        "bomber-jacket-custom",
+  description: "Premium bomber with custom back print",
 };
 
-export default function HeroSection() {
+interface Props {
+  product: Product | null;
+  label?: string;
+}
+
+export default function HeroSection({ product, label = "Featured Drop" }: Props) {
   const [showBack, setShowBack] = useState(false);
+
+  const name       = product?.name        ?? FALLBACK.name;
+  const price      = product?.price       ?? FALLBACK.price;
+  const frontImage = product?.front_image ?? FALLBACK.front_image;
+  const backImage  = product?.back_image  ?? product?.front_image ?? FALLBACK.back_image;
+  const slug       = product?.slug        ?? FALLBACK.slug;
+  const sizes      = product?.sizes       ?? FALLBACK.sizes;
+
+  // Build specs from product data
+  const specs = [
+    { label: "Material", value: "100% Premium Cotton" },
+    { label: "Lining",   value: "100% Polyester" },
+    { label: "Sizing",   value: sizes.length > 0 ? `${sizes[0]}–${sizes[sizes.length - 1]}` : "S–XXL" },
+    { label: "Print",    value: "Custom / On Demand" },
+  ];
 
   return (
     <section className="min-h-screen bg-base9-gray-100 relative overflow-hidden pt-16">
@@ -26,30 +50,30 @@ export default function HeroSection() {
         className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(0deg, #0A0A0A 0px, transparent 1px, transparent 80px), repeating-linear-gradient(90deg, #0A0A0A 0px, transparent 1px, transparent 80px)",
+            "repeating-linear-gradient(0deg,#0A0A0A 0px,transparent 1px,transparent 80px),repeating-linear-gradient(90deg,#0A0A0A 0px,transparent 1px,transparent 80px)",
         }}
       />
 
       <div className="max-w-7xl mx-auto px-6 lg:px-12 h-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-4rem)] items-center gap-8 py-12">
 
-          {/* Left — Product info */}
+          {/* Left — product info */}
           <div className="lg:col-span-4 animate-fade-up">
             <div className="space-y-2 mb-8">
               <p className="text-xs tracking-ultra-wide text-base9-gray-400 uppercase">
-                Featured Drop
+                {label}
               </p>
               <h1 className="text-4xl lg:text-5xl font-bold text-base9-black leading-tight">
-                {heroProduct.name}
+                {name}
               </h1>
               <p className="text-3xl font-light text-base9-gray-400 mt-2">
-                {formatPrice(heroProduct.price)}
+                {formatPrice(price)}
               </p>
             </div>
 
             <div className="space-y-2 mb-8">
               <Link
-                href="/shop"
+                href={`/shop/${slug}`}
                 className="inline-flex items-center gap-2 bg-base9-black text-base9-white px-6 py-3 text-sm tracking-widest uppercase font-medium hover:bg-base9-red transition-colors duration-300"
               >
                 Shop Now <ArrowRight size={14} />
@@ -64,7 +88,6 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Slide indicators */}
             <div className="flex gap-2 mt-auto">
               <div className="w-8 h-0.5 bg-base9-black" />
               <div className="w-4 h-0.5 bg-base9-gray-300" />
@@ -72,34 +95,33 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Center — Product image with circle frame */}
+          {/* Center — image with flip */}
           <div className="lg:col-span-5 flex items-center justify-center relative">
             {/* Circle background */}
             <div className="absolute w-[420px] h-[420px] lg:w-[520px] lg:h-[520px] rounded-full bg-base9-white shadow-sm" />
 
-            {/* Product image */}
             <div className="relative z-10 w-[340px] h-[460px] lg:w-[420px] lg:h-[560px]">
               <div className="perspective w-full h-full">
                 <div className={`flip-card-inner w-full h-full ${showBack ? "flipped" : ""}`}>
                   {/* Front */}
                   <div className="backface-hidden absolute inset-0">
                     <Image
-                      src={heroProduct.front}
-                      alt={`${heroProduct.name} front`}
+                      src={frontImage}
+                      alt={`${name} front`}
                       fill
                       className="object-contain object-bottom"
                       priority
-                      sizes="(max-width: 768px) 340px, 420px"
+                      sizes="(max-width:768px) 340px,420px"
                     />
                   </div>
                   {/* Back */}
                   <div className="backface-hidden rotate-y-180 absolute inset-0">
                     <Image
-                      src={heroProduct.back}
-                      alt={`${heroProduct.name} back`}
+                      src={backImage}
+                      alt={`${name} back`}
                       fill
                       className="object-contain object-bottom"
-                      sizes="(max-width: 768px) 340px, 420px"
+                      sizes="(max-width:768px) 340px,420px"
                     />
                   </div>
                 </div>
@@ -116,14 +138,9 @@ export default function HeroSection() {
             </button>
           </div>
 
-          {/* Right — Product specs */}
+          {/* Right — specs */}
           <div className="lg:col-span-3 space-y-6 animate-fade-up">
-            {[
-              { label: "Material", value: heroProduct.material },
-              { label: "Lining", value: heroProduct.lining },
-              { label: "Sizing", value: heroProduct.size },
-              { label: "Print", value: "Custom / On Demand" },
-            ].map((spec) => (
+            {specs.map(spec => (
               <div key={spec.label} className="border-b border-base9-gray-200 pb-4">
                 <p className="text-[10px] tracking-ultra-wide text-base9-gray-400 uppercase mb-1">
                   {spec.label}
@@ -132,13 +149,10 @@ export default function HeroSection() {
               </div>
             ))}
 
-            {/* Social links */}
             <div className="flex gap-3 pt-2">
-              {["IG", "TW", "TK"].map((s) => (
-                <span
-                  key={s}
-                  className="w-8 h-8 rounded-full border border-base9-gray-300 flex items-center justify-center text-[10px] tracking-wide text-base9-gray-500 hover:border-base9-black hover:text-base9-black cursor-pointer transition-colors"
-                >
+              {["IG", "TW", "TK"].map(s => (
+                <span key={s}
+                  className="w-8 h-8 rounded-full border border-base9-gray-300 flex items-center justify-center text-[10px] tracking-wide text-base9-gray-500 hover:border-base9-black hover:text-base9-black cursor-pointer transition-colors">
                   {s}
                 </span>
               ))}
@@ -147,7 +161,6 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* Brand statement */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center">
         <p className="text-[10px] tracking-ultra-wide text-base9-gray-400 uppercase">
           Your Vision — Our Craft
