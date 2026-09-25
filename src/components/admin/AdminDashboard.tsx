@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient, createMutationClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/currency";
 import {
   Plus, Package, ShoppingBag, LogOut, Edit,
@@ -29,7 +29,6 @@ export default function AdminDashboard() {
   const [viewOrder, setViewOrder]     = useState<Order | null>(null);
   const [loading, setLoading]         = useState(true);
   const supabase = createClient();
-  const db = createMutationClient();
 
   useEffect(() => { fetchData(); }, []);
 
@@ -47,29 +46,49 @@ export default function AdminDashboard() {
   };
 
   const togglePublish = async (p: Product) => {
-    await db.from("products").update({ is_published: !p.is_published }).eq("id", p.id);
+    await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: p.id, is_published: !p.is_published }),
+    });
     fetchData();
   };
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Delete this product? This cannot be undone.")) return;
-    await db.from("products").delete().eq("id", id);
+    await fetch("/api/admin/products", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
     fetchData();
   };
 
   const toggleDesignActive = async (d: Design) => {
-    await db.from("designs").update({ is_active: !d.is_active }).eq("id", d.id);
+    await fetch("/api/admin/designs", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: d.id, is_active: !d.is_active }),
+    });
     fetchData();
   };
 
   const deleteDesign = async (id: string) => {
     if (!confirm("Delete this design?")) return;
-    await supabase.from("designs").delete().eq("id", id);
+    await fetch("/api/admin/designs", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
     fetchData();
   };
 
   const updateOrderStatus = async (id: string, status: string) => {
-    await db.from("orders").update({ status }).eq("id", id);
+    await fetch("/api/admin/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
     fetchData();
   };
 

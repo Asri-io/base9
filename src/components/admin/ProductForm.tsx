@@ -15,9 +15,10 @@ interface Props {
 
 export default function ProductForm({ product, onClose, onSave }: Props) {
   const supabase = createMutationClient();
-  const [loading, setLoading]           = useState(false);
+  const [loading, setLoading]               = useState(false);
   const [uploadingFront, setUploadingFront] = useState(false);
   const [uploadingBack, setUploadingBack]   = useState(false);
+  const [error, setError]                   = useState("");
 
   const [form, setForm] = useState({
     name:         product?.name ?? "",
@@ -37,27 +38,37 @@ export default function ProductForm({ product, onClose, onSave }: Props) {
   const uploadImage = async (file: File, side: "front" | "back") => {
     const setter = side === "front" ? setUploadingFront : setUploadingBack;
     setter(true);
+
     const ext      = file.name.split(".").pop();
     const fileName = `${Date.now()}-${side}.${ext}`;
 
-    const { data, error } = await supabase.storage
+    const { data, error: uploadError } = await supabase.storage
       .from("product-images")
       .upload(fileName, file, { upsert: true });
 
-    if (error) { alert(`Upload failed: ${error.message}`); setter(false); return; }
+    if (uploadError) {
+      setError(`Image upload failed: ${uploadError.message}`);
+      setter(false);
+      return;
+    }
 
     const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(data.path);
-    setForm(prev => ({ ...prev, [side === "front" ? "front_image" : "back_image"]: urlData.publicUrl }));
+    setForm(prev => ({
+      ...prev,
+      [side === "front" ? "front_image" : "back_image"]: urlData.publicUrl,
+    }));
     setter(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     const slug = form.slug || form.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
     const payload = {
+      ...(product ? { id: product.id } : {}),
       name:         form.name,
       description:  form.description || null,
       price:        Number(form.price),
@@ -72,17 +83,25 @@ export default function ProductForm({ product, onClose, onSave }: Props) {
       slug,
     };
 
-    if (product) {
-      await supabase.from("products").update(payload).eq("id", product.id);
-    } else {
-      await supabase.from("products").insert(payload);
+    // Use server API route — uses service role key, bypasses RLS
+    const res = await fetch("/api/admin/products", {
+      method:  product ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.error || "Save failed");
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
     onSave();
   };
 
-  const ImageUploadSlot = ({ side }: { side: "front" | "back" }) => {
+  const ImageSlot = ({ side }: { side: "front" | "back" }) => {
     const key       = side === "front" ? "front_image" : "back_image";
     const uploading = side === "front" ? uploadingFront : uploadingBack;
 
@@ -123,10 +142,17 @@ export default function ProductForm({ product, onClose, onSave }: Props) {
           <h3 className="text-sm font-bold tracking-widest uppercase text-base9-black">
             {product ? "Edit Product" : "Add New Product"}
           </h3>
-          <button onClick={onClose} className="text-base9-gray-400 hover:text-base9-black"><X size={18} /></button>
+          <button onClick={onClose} className="text-base9-gray-400 hover:text-base9-black">
+            <X size={18} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-xs">
+              {error}
+            </div>
+          )}
 
           <div>
             <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-1.5">Product Name *</label>
@@ -180,17 +206,18 @@ export default function ProductForm({ product, onClose, onSave }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <ImageUploadSlot side="front" />
-            <ImageUploadSlot side="back" />
+            <ImageSlot side="front" />
+            <ImageSlot side="back" />
           </div>
 
           <div className="flex gap-6">
-            {[
+            {([
               { label: "Published (Live on site)", key: "is_published" as const },
               { label: "Featured on Homepage",     key: "is_featured" as const },
-            ].map(t => (
+            ]).map(t => (
               <label key={t.key} className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form[t.key]} onChange={e => setForm({ ...form, [t.key]: e.target.checked })}
+                <input type="checkbox" checked={form[t.key]}
+                  onChange={e => setForm({ ...form, [t.key]: e.target.checked })}
                   className="w-4 h-4 accent-base9-red" />
                 <span className="text-xs text-base9-gray-600">{t.label}</span>
               </label>
@@ -198,7 +225,7 @@ export default function ProductForm({ product, onClose, onSave }: Props) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={loading}
+            <button type="submit" disabled={loading || uploadingFront || uploadingBack}
               className="flex-1 bg-base9-black text-base9-white py-3 text-xs tracking-ultra-wide uppercase hover:bg-base9-red transition-colors disabled:opacity-50">
               {loading ? "Saving..." : product ? "Save Changes" : "Add Product"}
             </button>

@@ -57,10 +57,18 @@ export default function DesignForm({ design, onClose, onSave }: Props) {
       is_active:   form.is_active,
     };
 
-    if (design) {
-      await supabase.from("designs").update(payload).eq("id", design.id);
-    } else {
-      await supabase.from("designs").insert(payload);
+    // Use server API route — uses service role key, bypasses RLS
+    const res = await fetch("/api/admin/designs", {
+      method:  design ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(design ? { id: design.id, ...payload } : payload),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.error || "Save failed");
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
