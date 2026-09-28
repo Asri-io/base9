@@ -27,7 +27,7 @@ interface Props {
 
 export default function HeroSection({ product, label = "Featured Drop" }: Props) {
   const [showBack, setShowBack] = useState(false);
-  const [show3D,   setShow3D]   = useState(false);
+  const [show3D,   setShow3D]   = useState(true);  // 3D on by default on hero
   const [loaded,   setLoaded]   = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -188,20 +188,29 @@ export default function HeroSection({ product, label = "Featured Drop" }: Props)
             </div>
 
             {/* Control buttons */}
-            {!show3D && (
-              <button onClick={() => setShowBack(!showBack)}
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center gap-2 text-[10px] tracking-widest uppercase text-base9-gray-500 hover:text-base9-white transition-colors px-4 py-2 border border-base9-gray-800 hover:border-base9-gray-600 bg-base9-black/80 backdrop-blur-sm">
-                <RotateCcw size={10} />
-                {showBack ? "Front" : "Back"}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center gap-3">
+              {!show3D && (
+                <button onClick={() => setShowBack(!showBack)}
+                  className="flex items-center gap-2 text-[10px] tracking-widest uppercase text-base9-gray-500 hover:text-base9-white transition-colors px-4 py-2 border border-base9-gray-800 hover:border-base9-gray-600 bg-base9-black/80 backdrop-blur-sm">
+                  <RotateCcw size={10} />
+                  {showBack ? "Front" : "Back"}
+                </button>
+              )}
+              {show3D && (
+                <p className="text-[9px] tracking-widest uppercase text-base9-gray-700 px-3">
+                  Drag to rotate
+                </p>
+              )}
+              <button onClick={() => setShow3D(!show3D)}
+                className={`flex items-center gap-1.5 text-[10px] tracking-widest uppercase transition-colors px-4 py-2 border bg-base9-black/80 backdrop-blur-sm ${
+                  show3D
+                    ? "text-base9-red border-base9-red/40 hover:border-base9-red"
+                    : "text-base9-gray-500 border-base9-gray-800 hover:text-base9-white hover:border-base9-gray-600"
+                }`}>
+                <Box size={10} />
+                {show3D ? "2D View" : "View 3D"}
               </button>
-            )}
-
-            {/* 3D toggle — bottom right */}
-            <button onClick={() => setShow3D(!show3D)}
-              className="absolute -bottom-0 right-0 flex items-center gap-2 text-[10px] tracking-widest uppercase text-base9-gray-500 hover:text-base9-red transition-colors px-3 py-2">
-              <Box size={10} className={show3D ? "text-base9-red" : ""} />
-              {show3D ? "2D" : "3D"}
-            </button>
+            </div>
           </div>
 
           {/* ── RIGHT: Drop info ── */}

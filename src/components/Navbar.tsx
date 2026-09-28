@@ -37,7 +37,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1">
-            <span className="text-xl font-bold tracking-widest text-base9-black uppercase">BASE</span>
+            <span className={`text-xl font-bold tracking-widest uppercase transition-colors ${scrolled ? "text-base9-black" : "text-base9-white"}`}>BASE</span>
             <span className="text-xl font-bold text-base9-red">9</span>
           </Link>
 
@@ -51,7 +51,7 @@ export default function Navbar() {
               { label: "CONTACT",   href: "/contact" },
             ].map((link) => (
               <Link key={link.href} href={link.href}
-                className="text-xs tracking-ultra-wide text-base9-gray-500 hover:text-base9-black transition-colors duration-200 font-medium">
+                className={`text-xs tracking-ultra-wide transition-colors duration-200 font-medium ${scrolled ? "text-base9-gray-500 hover:text-base9-black" : "text-base9-gray-400 hover:text-base9-white"}`}>
                 {link.label}
               </Link>
             ))}
