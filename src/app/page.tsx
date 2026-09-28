@@ -33,8 +33,11 @@ export default async function Home() {
   // Find which product is set as the hero
   type Setting = { key: string; value: string };
   const settingsList = (settings ?? []) as Setting[];
-  const heroId = settingsList.find(s => s.key === "hero_product_id")?.value ?? "";
-  const heroLabel = settingsList.find(s => s.key === "hero_label")?.value ?? "Featured Drop";
+  const heroId       = settingsList.find(s => s.key === "hero_product_id")?.value ?? "";
+  const heroLabel    = settingsList.find(s => s.key === "hero_label")?.value ?? "Featured Drop";
+  const annText      = settingsList.find(s => s.key === "announcement_text")?.value ?? "Bulk orders available · 5+ pieces get special pricing";
+  const annLink      = settingsList.find(s => s.key === "announcement_link")?.value ?? "/bulk-orders";
+  const annEnabled   = settingsList.find(s => s.key === "announcement_enabled")?.value !== "false";
 
   let heroProduct: Product | null = null;
 
@@ -54,7 +57,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-base9-white">
-      <AnnouncementBar />
+      <AnnouncementBar text={annText} link={annLink} enabled={annEnabled} />
       <Navbar />
       <HeroSection product={heroProduct} label={heroLabel} />
       <FeaturedProducts products={featuredProducts ?? []} />

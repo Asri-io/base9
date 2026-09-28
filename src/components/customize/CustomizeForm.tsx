@@ -78,25 +78,29 @@ export default function CustomizeForm() {
       selectedDesignUrl = selectedDesign.image_url;
     }
 
-    await db.from("orders").insert({
-      customer_name:        form.name,
-      customer_email:       form.email,
-      customer_phone:       form.phone || null,
-      whatsapp:             form.whatsapp || null,
-      address:              form.address || null,
-      items: [{
-        garment:  form.garment,
-        size:     form.size,
-        color:    form.color,
-        quantity: form.quantity,
-        price,
-      }],
-      total,
-      status:               "pending",
-      notes:                form.notes || null,
-      custom_design_url:    customDesignUrl,
-      selected_design_id:   selectedDesignId,
-      selected_design_url:  selectedDesignUrl,
+    await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer_name:        form.name,
+        customer_email:       form.email,
+        customer_phone:       form.phone || null,
+        whatsapp:             form.whatsapp || null,
+        address:              form.address || null,
+        items: [{
+          garment:  form.garment,
+          size:     form.size,
+          color:    form.color,
+          quantity: form.quantity,
+          price,
+        }],
+        total,
+        status:               "pending",
+        notes:                form.notes || null,
+        custom_design_url:    customDesignUrl,
+        selected_design_id:   selectedDesignId,
+        selected_design_url:  selectedDesignUrl,
+      }),
     });
 
     setLoading(false);

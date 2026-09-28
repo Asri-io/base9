@@ -7,19 +7,27 @@ import { useCart } from "@/hooks/useCart";
 import { formatPrice } from "@/lib/currency";
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { itemCount, totalPrice } = useCart();
+  const [scrolled, setScrolled]       = useState(false);
+  const [barVisible, setBarVisible]   = useState(true);
+  const [mobileOpen, setMobileOpen]   = useState(false);
+  const { itemCount, totalPrice }     = useCart();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 20);
+      setBarVisible(y < 80);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Bar height is ~40px (py-2.5 + text line). When it hides navbar slides to top-0.
+  const navTop = barVisible ? "top-10" : "top-0";
+
   return (
     <nav
-      className={`fixed top-10 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed ${navTop} left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
           ? "bg-base9-white/95 backdrop-blur-sm border-b border-base9-gray-200"
           : "bg-transparent"
@@ -29,26 +37,21 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1">
-            <span className="text-xl font-bold tracking-widest text-base9-black uppercase">
-              BASE
-            </span>
+            <span className="text-xl font-bold tracking-widest text-base9-black uppercase">BASE</span>
             <span className="text-xl font-bold text-base9-red">9</span>
           </Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-10">
             {[
-              { label: "SHOP", href: "/shop" },
+              { label: "SHOP",      href: "/shop" },
               { label: "CUSTOMIZE", href: "/customize" },
-              { label: "LOOKBOOK", href: "/lookbook" },
-              { label: "ABOUT", href: "/about" },
-              { label: "CONTACT", href: "/contact" },
+              { label: "LOOKBOOK",  href: "/lookbook" },
+              { label: "ABOUT",     href: "/about" },
+              { label: "CONTACT",   href: "/contact" },
             ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-xs tracking-ultra-wide text-base9-gray-500 hover:text-base9-black transition-colors duration-200 font-medium"
-              >
+              <Link key={link.href} href={link.href}
+                className="text-xs tracking-ultra-wide text-base9-gray-500 hover:text-base9-black transition-colors duration-200 font-medium">
                 {link.label}
               </Link>
             ))}
@@ -67,13 +70,7 @@ export default function Navbar() {
                 )}
               </button>
             </Link>
-
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
-            >
+            <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
@@ -84,18 +81,14 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-base9-white border-t border-base9-gray-200 px-6 py-6 space-y-4">
           {[
-            { label: "SHOP", href: "/shop" },
+            { label: "SHOP",      href: "/shop" },
             { label: "CUSTOMIZE", href: "/customize" },
-            { label: "LOOKBOOK", href: "/lookbook" },
-            { label: "ABOUT", href: "/about" },
-            { label: "CONTACT", href: "/contact" },
+            { label: "LOOKBOOK",  href: "/lookbook" },
+            { label: "ABOUT",     href: "/about" },
+            { label: "CONTACT",   href: "/contact" },
           ].map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className="block text-xs tracking-ultra-wide text-base9-gray-500 hover:text-base9-black transition-colors py-2 font-medium"
-            >
+            <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}
+              className="block text-xs tracking-ultra-wide text-base9-gray-500 hover:text-base9-black transition-colors py-2 font-medium">
               {link.label}
             </Link>
           ))}

@@ -25,6 +25,18 @@ export default function AdminDashboard() {
   const [heroProductId, setHeroProductId] = useState("");
   const [heroLabel, setHeroLabel]         = useState("Featured Drop");
   const [settingsSaved, setSettingsSaved] = useState(false);
+  // Site settings state
+  const [siteSettings, setSiteSettings] = useState({
+    announcement_text:    "Bulk orders available now · 5+ pieces get special pricing",
+    announcement_link:    "/bulk-orders",
+    announcement_enabled: "true",
+    contact_email:        "hello@base9.co",
+    whatsapp_number:      "",
+    instagram_url:        "",
+    twitter_url:          "",
+    tiktok_url:           "",
+    order_notification_whatsapp: "",
+  });
   const [showProductForm, setShowProductForm] = useState(false);
   const [showDesignForm, setShowDesignForm]   = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -52,14 +64,26 @@ export default function AdminDashboard() {
     const label  = settingsList.find(s => s.key === "hero_label")?.value ?? "Featured Drop";
     setHeroProductId(heroId);
     setHeroLabel(label);
+    // Load all site settings
+    const loaded: Record<string, string> = {};
+    settingsList.forEach(s => { loaded[s.key] = s.value; });
+    setSiteSettings(prev => ({ ...prev, ...loaded }));
     setLoading(false);
   };
 
   const saveHeroSettings = async () => {
-    await Promise.all([
-      fetch("/api/admin/settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "hero_product_id", value: heroProductId }) }),
-      fetch("/api/admin/settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "hero_label", value: heroLabel }) }),
-    ]);
+    const keys = [
+      { key: "hero_product_id",  value: heroProductId },
+      { key: "hero_label",       value: heroLabel },
+      ...Object.entries(siteSettings).map(([key, value]) => ({ key, value })),
+    ];
+    await Promise.all(keys.map(({ key, value }) =>
+      fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value }),
+      })
+    ));
     setSettingsSaved(true);
     setTimeout(() => setSettingsSaved(false), 3000);
   };
@@ -390,145 +414,148 @@ export default function AdminDashboard() {
         {/* ── SETTINGS TAB ── */}
         {tab === "settings" && (
           <div className="max-w-2xl space-y-8">
-            <div>
-              <h2 className="text-lg font-bold text-base9-black mb-1">Homepage Hero</h2>
-              <p className="text-xs text-base9-gray-400 mb-6">
-                Choose which product appears in the main hero section on the homepage.
-                The product&apos;s front and back images, name, and price will show automatically.
-              </p>
+
+            {/* ── Announcement Bar ── */}
+            <div className="bg-base9-white border border-base9-gray-200 p-6 space-y-4">
+              <h3 className="text-sm font-bold text-base9-black">Announcement Bar</h3>
+              <p className="text-xs text-base9-gray-400">The red bar at the top of the homepage. Hides when visitors scroll.</p>
+              <div>
+                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-1.5">Message Text</label>
+                <input type="text" value={siteSettings.announcement_text}
+                  onChange={e => setSiteSettings(p => ({ ...p, announcement_text: e.target.value }))}
+                  className="w-full border border-base9-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:border-base9-black"
+                  placeholder="e.g. Hoodies dropping soon — Bulk orders available now" />
+              </div>
+              <div>
+                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-1.5">Link URL</label>
+                <input type="text" value={siteSettings.announcement_link}
+                  onChange={e => setSiteSettings(p => ({ ...p, announcement_link: e.target.value }))}
+                  className="w-full border border-base9-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:border-base9-black"
+                  placeholder="/bulk-orders" />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox"
+                  checked={siteSettings.announcement_enabled === "true"}
+                  onChange={e => setSiteSettings(p => ({ ...p, announcement_enabled: e.target.checked ? "true" : "false" }))}
+                  className="w-4 h-4 accent-base9-red" />
+                <span className="text-xs text-base9-gray-600">Show announcement bar on site</span>
+              </label>
             </div>
 
-            {/* Hero product picker */}
+            {/* ── Hero Product ── */}
             <div className="bg-base9-white border border-base9-gray-200 p-6 space-y-5">
+              <h3 className="text-sm font-bold text-base9-black">Homepage Hero</h3>
+              <p className="text-xs text-base9-gray-400">The main featured product shown full-screen on the homepage.</p>
               <div>
-                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-2">
-                  Section Label (shown above the product name)
-                </label>
-                <input
-                  type="text"
-                  value={heroLabel}
-                  onChange={e => setHeroLabel(e.target.value)}
+                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-2">Section Label</label>
+                <input type="text" value={heroLabel} onChange={e => setHeroLabel(e.target.value)}
                   className="w-full border border-base9-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:border-base9-black"
-                  placeholder="e.g. Featured Drop, New Arrival, Best Seller"
-                />
+                  placeholder="e.g. Featured Drop, New Arrival" />
               </div>
-
               <div>
-                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-2">
-                  Hero Product
-                </label>
+                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-2">Hero Product</label>
                 {products.filter(p => p.is_published).length === 0 ? (
-                  <p className="text-xs text-base9-gray-400 py-3">
-                    No published products yet. Add and publish a product first.
-                  </p>
+                  <p className="text-xs text-base9-gray-400">No published products yet.</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {/* None option */}
-                    <button
-                      type="button"
-                      onClick={() => setHeroProductId("")}
-                      className={`border p-3 text-left transition-all ${
-                        heroProductId === ""
-                          ? "border-base9-black bg-base9-black text-base9-white"
-                          : "border-base9-gray-200 hover:border-base9-gray-400"
-                      }`}
-                    >
-                      <p className="text-xs font-medium">Default</p>
-                      <p className={`text-[10px] mt-0.5 ${heroProductId === "" ? "text-base9-gray-300" : "text-base9-gray-400"}`}>
-                        Use hardcoded fallback
-                      </p>
+                    <button type="button" onClick={() => setHeroProductId("")}
+                      className={`border p-3 text-left transition-all ${heroProductId === "" ? "border-base9-black bg-base9-black text-base9-white" : "border-base9-gray-200 hover:border-base9-gray-400"}`}>
+                      <p className="text-xs font-medium">Default / None</p>
                     </button>
-
                     {products.filter(p => p.is_published).map(p => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setHeroProductId(p.id)}
-                        className={`border relative text-left transition-all overflow-hidden ${
-                          heroProductId === p.id
-                            ? "border-base9-red"
-                            : "border-base9-gray-200 hover:border-base9-gray-400"
-                        }`}
-                      >
+                      <button key={p.id} type="button" onClick={() => setHeroProductId(p.id)}
+                        className={`border relative text-left overflow-hidden ${heroProductId === p.id ? "border-base9-red" : "border-base9-gray-200 hover:border-base9-gray-400"}`}>
                         {p.front_image && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.front_image} alt={p.name} className="w-full h-24 object-cover" />
+                          <img src={p.front_image} alt={p.name} className="w-full h-20 object-cover" />
                         )}
                         <div className="p-2">
                           <p className="text-xs font-medium text-base9-black truncate">{p.name}</p>
                           <p className="text-[10px] text-base9-gray-400">{formatPrice(p.price)}</p>
                         </div>
                         {heroProductId === p.id && (
-                          <div className="absolute top-2 right-2 bg-base9-red text-white text-[9px] px-1.5 py-0.5 uppercase tracking-wider">
-                            Hero
-                          </div>
+                          <div className="absolute top-1 right-1 bg-base9-red text-white text-[9px] px-1.5 py-0.5 uppercase tracking-wider">Hero</div>
                         )}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-
-              {/* Preview of selected */}
-              {heroProductId && products.find(p => p.id === heroProductId) && (() => {
-                const p = products.find(p => p.id === heroProductId)!;
-                return (
-                  <div className="border border-base9-gray-200 p-4 bg-base9-gray-100">
-                    <p className="text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-3">Preview</p>
-                    <div className="flex gap-4 items-center">
-                      {p.front_image && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.front_image} alt={p.name} className="w-16 h-20 object-cover" />
-                      )}
-                      <div>
-                        <p className="text-[10px] text-base9-gray-400 uppercase tracking-widest">{heroLabel}</p>
-                        <p className="text-base font-bold text-base9-black mt-1">{p.name}</p>
-                        <p className="text-sm text-base9-gray-500 mt-0.5">{formatPrice(p.price)}</p>
-                        <p className="text-xs text-base9-gray-400 mt-1">
-                          Front image: {p.front_image ? "✓" : "✗ missing"} · Back image: {p.back_image ? "✓" : "✗ missing"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              <button
-                onClick={saveHeroSettings}
-                className="bg-base9-black text-base9-white px-6 py-3 text-xs tracking-ultra-wide uppercase hover:bg-base9-red transition-colors"
-              >
-                {settingsSaved ? "✓ Saved!" : "Save Hero Settings"}
-              </button>
             </div>
 
-            {/* Other settings */}
+            {/* ── Contact & Social ── */}
             <div className="bg-base9-white border border-base9-gray-200 p-6 space-y-4">
-              <h3 className="text-sm font-bold text-base9-black">Other Settings</h3>
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-medium text-base9-black">Custom Domain</p>
-                    <p className="text-xs text-base9-gray-400 mt-0.5 leading-relaxed">
-                      Buy <strong>base9.com.ng</strong> or <strong>base9.co</strong>, then add it in{" "}
-                      <a href="https://vercel.com/asri-ios-projects/base9-store/settings/domains" target="_blank" className="text-base9-red hover:underline">
-                        Vercel → Domains
-                      </a>
-                    </p>
-                  </div>
+              <h3 className="text-sm font-bold text-base9-black">Contact & Social</h3>
+              <p className="text-xs text-base9-gray-400">These show in the footer and contact page.</p>
+              {[
+                { key: "contact_email",   label: "Contact Email",      placeholder: "hello@base9.co" },
+                { key: "whatsapp_number", label: "WhatsApp Number",    placeholder: "+2348012345678" },
+                { key: "instagram_url",   label: "Instagram URL",      placeholder: "https://instagram.com/base9.clothing" },
+                { key: "twitter_url",     label: "Twitter / X URL",    placeholder: "https://twitter.com/base9" },
+                { key: "tiktok_url",      label: "TikTok URL",         placeholder: "https://tiktok.com/@base9" },
+              ].map(field => (
+                <div key={field.key}>
+                  <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-1.5">{field.label}</label>
+                  <input type="text"
+                    value={siteSettings[field.key as keyof typeof siteSettings]}
+                    onChange={e => setSiteSettings(p => ({ ...p, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                    className="w-full border border-base9-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:border-base9-black" />
                 </div>
-                <div className="border-t border-base9-gray-200 pt-3 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-medium text-base9-black">Change Admin Password</p>
-                    <p className="text-xs text-base9-gray-400 mt-0.5">
-                      Update <code>ADMIN_PASSWORD</code> in{" "}
-                      <a href="https://vercel.com/asri-ios-projects/base9-store/settings/environment-variables" target="_blank" className="text-base9-red hover:underline">
-                        Vercel → Environment Variables
-                      </a>
-                    </p>
-                  </div>
-                </div>
+              ))}
+            </div>
+
+            {/* ── Notifications ── */}
+            <div className="bg-base9-white border border-base9-gray-200 p-6 space-y-4">
+              <h3 className="text-sm font-bold text-base9-black">Order Notifications</h3>
+              <p className="text-xs text-base9-gray-400 leading-relaxed">
+                Get a WhatsApp message when a new order comes in. Enter your WhatsApp number below.
+                Uses the Callmebot free API — no account needed.
+              </p>
+              <div>
+                <label className="block text-[10px] tracking-ultra-wide uppercase text-base9-gray-400 mb-1.5">
+                  Your WhatsApp Number (for notifications)
+                </label>
+                <input type="tel"
+                  value={siteSettings.order_notification_whatsapp}
+                  onChange={e => setSiteSettings(p => ({ ...p, order_notification_whatsapp: e.target.value }))}
+                  placeholder="+2348012345678"
+                  className="w-full border border-base9-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:border-base9-black" />
+              </div>
+              <div className="bg-base9-gray-100 p-4 text-xs text-base9-gray-500 leading-relaxed">
+                <p className="font-medium text-base9-black mb-1">Setup (one time):</p>
+                <ol className="space-y-1 list-decimal pl-4">
+                  <li>Save your number above</li>
+                  <li>Send <strong>I allow callmebot to send me messages</strong> to <strong>+34 644 71 76 56</strong> on WhatsApp</li>
+                  <li>Wait for the API key reply — you&apos;ll receive notifications automatically after that</li>
+                </ol>
               </div>
             </div>
+
+            {/* ── Other Settings ── */}
+            <div className="bg-base9-white border border-base9-gray-200 p-6 space-y-3">
+              <h3 className="text-sm font-bold text-base9-black">Other</h3>
+              <div>
+                <p className="text-xs font-medium text-base9-black">Custom Domain</p>
+                <p className="text-xs text-base9-gray-400 mt-0.5">
+                  Buy <strong>base9.com.ng</strong> or <strong>base9.co</strong>, add it in{" "}
+                  <a href="https://vercel.com/asri-ios-projects/base9-store/settings/domains" target="_blank" className="text-base9-red hover:underline">Vercel → Domains</a>
+                </p>
+              </div>
+              <div className="border-t border-base9-gray-200 pt-3">
+                <p className="text-xs font-medium text-base9-black">Admin Password</p>
+                <p className="text-xs text-base9-gray-400 mt-0.5">
+                  Change <code>ADMIN_PASSWORD</code> in{" "}
+                  <a href="https://vercel.com/asri-ios-projects/base9-store/settings/environment-variables" target="_blank" className="text-base9-red hover:underline">Vercel → Environment Variables</a>
+                </p>
+              </div>
+            </div>
+
+            {/* Save button */}
+            <button onClick={saveHeroSettings}
+              className="w-full bg-base9-black text-base9-white py-4 text-xs tracking-ultra-wide uppercase hover:bg-base9-red transition-colors">
+              {settingsSaved ? "✓ All Settings Saved!" : "Save All Settings"}
+            </button>
           </div>
         )}
       </div>

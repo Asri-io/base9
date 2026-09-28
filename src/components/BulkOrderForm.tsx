@@ -5,7 +5,8 @@ import { createMutationClient } from "@/lib/supabase/client";
 import { CheckCircle, Upload } from "lucide-react";
 
 export default function BulkOrderForm() {
-  const db = createMutationClient();
+  // Storage client for file upload only
+  const storage = createMutationClient();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [briefFile, setBriefFile] = useState<File | null>(null);
@@ -29,30 +30,34 @@ export default function BulkOrderForm() {
     let briefUrl: string | null = null;
     if (briefFile) {
       const ext = briefFile.name.split(".").pop();
-      const { data } = await db.storage.from("custom-designs")
+      const { data } = await storage.storage.from("custom-designs")
         .upload(`bulk-brief-${Date.now()}.${ext}`, briefFile, { upsert: true });
       if (data) {
-        const { data: u } = db.storage.from("custom-designs").getPublicUrl(data.path);
+        const { data: u } = storage.storage.from("custom-designs").getPublicUrl(data.path);
         briefUrl = u.publicUrl;
       }
     }
 
-    await db.from("orders").insert({
-      customer_name: form.name,
-      customer_email: form.email,
-      customer_phone: form.phone || null,
-      whatsapp: form.whatsapp || null,
-      items: [{
-        type: "bulk",
-        garments: form.garments,
-        quantity: Number(form.quantity),
-        organisation: form.organisation,
-        deadline: form.deadline,
-      }],
-      total: 0, // quoted manually
-      status: "pending",
-      notes: `BULK ORDER — ${form.organisation || "Individual"} — ${form.quantity} pcs ${form.garments}${form.deadline ? ` — Deadline: ${form.deadline}` : ""}${form.notes ? `\n\n${form.notes}` : ""}`,
-      custom_design_url: briefUrl,
+    await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer_name: form.name,
+        customer_email: form.email,
+        customer_phone: form.phone || null,
+        whatsapp: form.phone || null,
+        items: [{
+          type: "bulk",
+          garments: form.garments,
+          quantity: Number(form.quantity),
+          organisation: form.organisation,
+          deadline: form.deadline,
+        }],
+        total: 0,
+        status: "pending",
+        notes: `BULK ORDER — ${form.organisation || "Individual"} — ${form.quantity} pcs ${form.garments}${form.deadline ? ` — Deadline: ${form.deadline}` : ""}${form.notes ? `\n\n${form.notes}` : ""}`,
+        custom_design_url: briefUrl,
+      }),
     });
 
     setLoading(false);

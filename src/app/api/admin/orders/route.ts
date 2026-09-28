@@ -11,8 +11,7 @@ function getAdminClient() {
 
 async function requireAdmin() {
   const cookieStore = await cookies();
-  const auth = cookieStore.get("base9_admin");
-  return auth?.value === "authenticated";
+  return cookieStore.get("base9_admin")?.value === "authenticated";
 }
 
 export async function PATCH(req: NextRequest) {

@@ -28,6 +28,7 @@ export default function Footer() {
                 { label: "Customize", href: "/customize" },
                 { label: "Lookbook", href: "/lookbook" },
                 { label: "Bulk Orders", href: "/bulk-orders" },
+                { label: "Track Order", href: "/track" },
                 { label: "About", href: "/about" },
                 { label: "Contact", href: "/contact" },
               ].map((l) => (
