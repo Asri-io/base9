@@ -4,34 +4,24 @@ import { useEffect, useRef } from "react";
 
 interface ThreeViewerProps {
   frontImage: string;
-  backImage: string;
+  backImage:  string;
 }
 
-// We load Three.js + GLTFLoader from CDN at runtime to keep bundle size zero.
-// The T-shirt model is a free GLB hosted on a public CDN with proper UV maps
-// so the product image maps naturally onto the fabric.
-const THREE_CDN  = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js";
-const GLTF_CDN   = "https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/GLTFLoader.js";
-// Free UV-mapped T-shirt GLB from poly.pizza (CC0 license)
-const TSHIRT_GLB = "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r134/examples/models/gltf/RobotExpressive/RobotExpressive.glb";
-
-// We use a simpler approach: a curved plane that simulates a garment shape
-// with the product image mapped as texture — looks natural with proper lighting
+const THREE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js";
 
 export default function ThreeViewer({ frontImage, backImage }: ThreeViewerProps) {
-  const mountRef = useRef<HTMLDivElement>(null);
+  const mountRef   = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
 
-    // Prevent double-init
     if (cleanupRef.current) { cleanupRef.current(); cleanupRef.current = null; }
 
-    const script = document.createElement("script");
-    script.src = THREE_CDN;
-    script.async = true;
+    const script    = document.createElement("script");
+    script.src      = THREE_CDN;
+    script.async    = true;
 
     script.onload = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,90 +35,81 @@ export default function ThreeViewer({ frontImage, backImage }: ThreeViewerProps)
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setSize(W, H);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
-      renderer.outputEncoding    = THREE.sRGBEncoding;
-      renderer.toneMapping       = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.2;
+      renderer.shadowMap.enabled   = true;
+      renderer.outputEncoding      = THREE.sRGBEncoding;
+      renderer.toneMapping         = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
       mount.appendChild(renderer.domElement);
 
       // ── Scene ──
       const scene = new THREE.Scene();
-      scene.background = null; // transparent — outer div sets bg
+      // No background — outer div handles the dark bg
 
-      // ── Camera ──
-      const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 100);
-      camera.position.set(0, 0.1, 3.2);
+      // ── Camera — pulled back enough to see the full garment ──
+      const aspect = W / H;
+      const camera = new THREE.PerspectiveCamera(28, aspect, 0.1, 100);
+      camera.position.set(0, 0, 5.5);
 
-      // ── Lighting — 3-point setup for fabric feel ──
-      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-      scene.add(ambient);
+      // ── Lighting ──
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-      // Key light (top-left — main illumination)
-      const key = new THREE.DirectionalLight(0xfff5e0, 2.5);
-      key.position.set(-2, 3, 2);
-      key.castShadow = true;
+      const key = new THREE.DirectionalLight(0xfff5e0, 2.0);
+      key.position.set(-2, 3, 4);
       scene.add(key);
 
-      // Fill light (right — softer)
-      const fill = new THREE.DirectionalLight(0xe0f0ff, 0.8);
-      fill.position.set(3, 1, 1);
+      const fill = new THREE.DirectionalLight(0xddeeff, 0.6);
+      fill.position.set(3, 0, 2);
       scene.add(fill);
 
-      // Rim light (back — separates garment from bg)
-      const rim = new THREE.DirectionalLight(0xffffff, 1.2);
-      rim.position.set(0, -1, -3);
+      const rim = new THREE.DirectionalLight(0xffffff, 0.8);
+      rim.position.set(0, -2, -4);
       scene.add(rim);
 
-      // ── Garment geometry — curved plane simulating folded fabric ──
-      // We use a higher-segment PlaneGeometry and displace vertices
-      // to create natural drape/curvature
-      const SEG = 30;
-      const geo = new THREE.PlaneGeometry(1.8, 2.4, SEG, SEG);
+      // ── Garment geometry ──
+      // Key: use correct aspect ratio so the garment image isn't stretched
+      // Standard garment photo is roughly 3:4 (width:height)
+      const GW   = 1.6;   // garment width in scene units
+      const GH   = 2.0;   // garment height — 3:4 ratio
+      const SEG  = 24;    // segments for smooth drape
 
-      // Displace vertices to simulate fabric drape
+      const geo = new THREE.PlaneGeometry(GW, GH, SEG, SEG);
       const pos = geo.attributes.position;
+
+      // Gentle barrel curve — subtle, not aggressive
       for (let i = 0; i < pos.count; i++) {
         const x = pos.getX(i);
         const y = pos.getY(i);
-        // Subtle barrel curve (fabric wraps around body)
-        const zCurve = -0.18 * (x * x) + 0.04 * Math.sin(y * 2.5);
-        // Slight vertical drape sag
-        const ySag   = -0.06 * Math.pow(Math.abs(y + 1.2) / 2.4, 2);
-        pos.setZ(i, zCurve + ySag * 0.3);
+        // Very subtle bow — makes it look like fabric on a mannequin
+        const zCurve = -0.08 * (x * x);
+        // Slight drape sag at bottom
+        const ySag   = y < -0.5 ? -0.02 * Math.pow(Math.abs(y + GH / 2) / (GH / 2), 2) : 0;
+        pos.setZ(i, zCurve + ySag);
       }
       geo.computeVertexNormals();
 
-      // ── Texture loader ──
+      // ── Textures ──
       const loader   = new THREE.TextureLoader();
-      const frontTex = loader.load(frontImage, (t: { encoding: number; anisotropy: number }) => {
-        t.encoding   = THREE.sRGBEncoding;
-        t.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        renderer.render(scene, camera);
-      });
-      const backTex = loader.load(backImage || frontImage, (t: { encoding: number; anisotropy: number }) => {
-        t.encoding   = THREE.sRGBEncoding;
-        t.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        renderer.render(scene, camera);
-      });
+      const frontTex = loader.load(frontImage);
+      const backTex  = loader.load(backImage || frontImage);
+      frontTex.encoding = THREE.sRGBEncoding;
+      backTex.encoding  = THREE.sRGBEncoding;
 
-      // ── Material — MeshStandardMaterial gives PBR fabric look ──
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const makeGarmentMat = (map: any) => new THREE.MeshStandardMaterial({
-        map,
-        roughness:        0.88,  // fabric is rough
-        metalness:        0.0,
-        side:             THREE.FrontSide,
-        // Subtle normal variation via roughness map would go here
+      // ── Materials — fabric-like roughness ──
+      const frontMat = new THREE.MeshStandardMaterial({
+        map:       frontTex,
+        roughness: 0.85,
+        metalness: 0.0,
+        side:      THREE.FrontSide,
       });
-
-      const frontMat  = makeGarmentMat(frontTex);
-      const backMat   = makeGarmentMat(backTex);
+      const backMat = new THREE.MeshStandardMaterial({
+        map:       backTex,
+        roughness: 0.85,
+        metalness: 0.0,
+        side:      THREE.BackSide,
+      });
 
       const frontMesh = new THREE.Mesh(geo, frontMat);
       const backMesh  = new THREE.Mesh(geo, backMat);
-      backMesh.rotation.y = Math.PI;
-      backMesh.position.z = -0.001;
 
       const group = new THREE.Group();
       group.add(frontMesh);
@@ -138,28 +119,17 @@ export default function ThreeViewer({ frontImage, backImage }: ThreeViewerProps)
       // ── Interaction ──
       let isDragging = false;
       let prevX = 0, prevY = 0;
-      let rotY = 0, rotX = 0;
+      let targetRotY = 0, targetRotX = 0;
+      let currentRotY = 0, currentRotX = 0;
       let velY = 0;
       let autoRotate = true;
-      const AUTO_SPEED = 0.004;
 
-      const startDrag = (x: number, y: number) => { isDragging = true; autoRotate = false; velY = 0; prevX = x; prevY = y; };
-      const moveDrag  = (x: number, y: number) => {
-        if (!isDragging) return;
-        velY  = (x - prevX) * 0.012;
-        rotY += velY;
-        rotX += (y - prevY) * 0.006;
-        rotX  = Math.max(-0.4, Math.min(0.4, rotX)); // clamp vertical
-        prevX = x; prevY = y;
-      };
-      const endDrag   = () => { isDragging = false; };
-
-      const onMouseDown  = (e: MouseEvent)  => startDrag(e.clientX, e.clientY);
-      const onMouseMove  = (e: MouseEvent)  => moveDrag(e.clientX, e.clientY);
-      const onMouseUp    = ()               => endDrag();
-      const onTouchStart = (e: TouchEvent) => startDrag(e.touches[0].clientX, e.touches[0].clientY);
-      const onTouchMove  = (e: TouchEvent) => moveDrag(e.touches[0].clientX, e.touches[0].clientY);
-      const onTouchEnd   = ()              => endDrag();
+      const onMouseDown  = (e: MouseEvent)  => { isDragging = true; autoRotate = false; velY = 0; prevX = e.clientX; prevY = e.clientY; };
+      const onMouseMove  = (e: MouseEvent)  => { if (!isDragging) return; velY = (e.clientX - prevX) * 0.015; targetRotY += velY; targetRotX += (e.clientY - prevY) * 0.008; targetRotX = Math.max(-0.35, Math.min(0.35, targetRotX)); prevX = e.clientX; prevY = e.clientY; };
+      const onMouseUp    = ()               => { isDragging = false; };
+      const onTouchStart = (e: TouchEvent)  => { isDragging = true; autoRotate = false; velY = 0; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; };
+      const onTouchMove  = (e: TouchEvent)  => { if (!isDragging) return; velY = (e.touches[0].clientX - prevX) * 0.015; targetRotY += velY; targetRotX += (e.touches[0].clientY - prevY) * 0.008; targetRotX = Math.max(-0.35, Math.min(0.35, targetRotX)); prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; };
+      const onTouchEnd   = ()               => { isDragging = false; };
 
       renderer.domElement.addEventListener("mousedown",  onMouseDown);
       window.addEventListener("mousemove",  onMouseMove);
@@ -168,36 +138,42 @@ export default function ThreeViewer({ frontImage, backImage }: ThreeViewerProps)
       window.addEventListener("touchmove",  onTouchMove, { passive: true });
       window.addEventListener("touchend",   onTouchEnd);
 
-      // ── Animation loop ──
+      // ── Animation loop with lerp for smoothness ──
       let frameId: number;
+      const clock = new THREE.Clock();
+
       const animate = () => {
         frameId = requestAnimationFrame(animate);
+        const t = clock.getElapsedTime();
 
         if (autoRotate) {
-          rotY += AUTO_SPEED;
+          targetRotY += 0.003;
         } else if (!isDragging) {
-          // Momentum + return to upright
-          velY  *= 0.92;
-          rotY  += velY;
-          rotX  *= 0.94;
+          velY *= 0.90;
+          targetRotY += velY;
+          targetRotX *= 0.92;
         }
 
-        group.rotation.y = rotY;
-        group.rotation.x = rotX;
+        // Smooth interpolation
+        currentRotY += (targetRotY - currentRotY) * 0.08;
+        currentRotX += (targetRotX - currentRotX) * 0.08;
 
-        // Subtle float bob
-        group.position.y = Math.sin(Date.now() * 0.001) * 0.03;
+        group.rotation.y = currentRotY;
+        group.rotation.x = currentRotX;
+
+        // Subtle float
+        group.position.y = Math.sin(t * 0.8) * 0.025;
 
         renderer.render(scene, camera);
       };
       animate();
 
-      // ── Cleanup ──
       cleanupRef.current = () => {
         cancelAnimationFrame(frameId);
         renderer.dispose();
         geo.dispose();
-        frontMat.dispose(); backMat.dispose();
+        frontMat.dispose();
+        backMat.dispose();
         renderer.domElement.removeEventListener("mousedown",  onMouseDown);
         window.removeEventListener("mousemove",  onMouseMove);
         window.removeEventListener("mouseup",    onMouseUp);
@@ -219,9 +195,6 @@ export default function ThreeViewer({ frontImage, backImage }: ThreeViewerProps)
   return (
     <div className="w-full h-full relative bg-transparent">
       <div ref={mountRef} className="w-full h-full" />
-      <p className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] tracking-widest text-base9-gray-600 uppercase pointer-events-none select-none">
-        Drag to rotate
-      </p>
     </div>
   );
 }
