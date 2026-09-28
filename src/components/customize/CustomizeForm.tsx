@@ -3,8 +3,12 @@
 import { useState, useEffect } from "react";
 import { createClient, createMutationClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/currency";
-import { Upload, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
+import { Upload, CheckCircle, ChevronRight, ChevronLeft, Eye } from "lucide-react";
 import type { Database } from "@/types/database";
+import dynamic from "next/dynamic";
+
+// Lazy-load MockupCanvas — only needed when design is selected
+const MockupCanvas = dynamic(() => import("@/components/MockupCanvas"), { ssr: false });
 
 type Design = Database["public"]["Tables"]["designs"]["Row"];
 
@@ -28,6 +32,14 @@ export default function CustomizeForm() {
   const [designFile, setDesignFile] = useState<File | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const [designCategory, setDesignCategory] = useState("All");
+  const [showMockup, setShowMockup] = useState(false);
+  const [designPreviewUrl, setDesignPreviewUrl] = useState<string>("");
+
+  // Garment base images for mockup (grayscale blanks — works with any colour via CSS filter)
+  const GARMENT_IMAGES: Record<string, string> = {
+    "T-Shirt": "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&q=90",
+    "Jacket":  "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=90",
+  };
 
   const [form, setForm] = useState({
     name:     "",
@@ -231,6 +243,40 @@ export default function CustomizeForm() {
               ))}
             </div>
 
+            {/* ── Live Mockup Preview ── */}
+            {(designPreviewUrl || (designFile && designFile.type.startsWith("image/"))) && (
+              <div className="border border-base9-gray-200 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 bg-base9-gray-100 border-b border-base9-gray-200">
+                  <p className="text-[10px] tracking-ultra-wide uppercase text-base9-gray-500">
+                    Live Preview — {form.garment} · {form.color}
+                  </p>
+                  <button type="button" onClick={() => setShowMockup(!showMockup)}
+                    className="flex items-center gap-1 text-[10px] tracking-widest uppercase text-base9-gray-500 hover:text-base9-black transition-colors">
+                    <Eye size={10} />
+                    {showMockup ? "Hide" : "Show"} Mockup
+                  </button>
+                </div>
+                {showMockup && (
+                  <div className="relative aspect-square max-h-64 bg-base9-gray-100 overflow-hidden">
+                    <MockupCanvas
+                      garmentImageSrc={GARMENT_IMAGES[form.garment] ?? GARMENT_IMAGES["T-Shirt"]}
+                      designSrc={
+                        designFile && designFile.type.startsWith("image/")
+                          ? URL.createObjectURL(designFile)
+                          : designPreviewUrl
+                      }
+                      garmentType={form.garment === "Jacket" ? "jacket" : "tshirt"}
+                      garmentColor={form.color}
+                      className="w-full h-full object-contain"
+                    />
+                    <p className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] tracking-widest uppercase text-base9-gray-400 bg-base9-white/80 px-2 py-0.5">
+                      Approximate preview
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {designMode === "pick" && (
               <div className="space-y-4">
                 {/* Category filter */}
@@ -253,7 +299,7 @@ export default function CustomizeForm() {
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {filteredDesigns.map(d => (
-                      <button key={d.id} type="button" onClick={() => setSelectedDesign(d)}
+                      <button key={d.id} type="button" onClick={() => { setSelectedDesign(d); setDesignPreviewUrl(d.image_url); setShowMockup(true); }}
                         className={`relative border-2 transition-all text-left group ${
                           selectedDesign?.id === d.id ? "border-base9-red" : "border-transparent hover:border-base9-gray-300"
                         }`}>
@@ -279,7 +325,7 @@ export default function CustomizeForm() {
               <div className="space-y-4">
                 <label className="cursor-pointer block border-2 border-dashed border-base9-gray-300 hover:border-base9-black transition-colors p-10 text-center">
                   <input type="file" accept=".png,.jpg,.jpeg,.ai,.pdf,.svg" className="hidden"
-                    onChange={e => setDesignFile(e.target.files?.[0] ?? null)} />
+                    onChange={e => { const f = e.target.files?.[0] ?? null; setDesignFile(f); if (f && f.type.startsWith("image/")) setShowMockup(true); }} />
                   {designFile ? (
                     <div className="space-y-2">
                       {designFile.type.startsWith("image/") && (
