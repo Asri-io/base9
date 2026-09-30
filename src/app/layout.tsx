@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import CustomCursor from "@/components/CustomCursor";
 
 export const metadata: Metadata = {
   title: "BASE9 — Custom Clothing",
@@ -30,7 +29,6 @@ export default function RootLayout({
         />
       </head>
       <body className="grain">
-        <CustomCursor />
         {children}
       </body>
     </html>

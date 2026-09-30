@@ -63,11 +63,8 @@ body {
 
 /* ── Luxury additions ── */
 
-/* Custom cursor — only active on devices with fine pointer (desktop) */
-@media (pointer: fine) {
-  body { cursor: none; }
-  a, button, [role="button"], input, select, textarea, label { cursor: none; }
-}
+/* Custom cursor — disabled for now */
+
 
 /* Float animation for product image */
 @keyframes float {

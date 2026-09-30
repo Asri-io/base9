@@ -49,7 +49,7 @@ export default function HeroSection({ product, label = "Featured Drop" }: Props)
 
   return (
     <section ref={sectionRef}
-      className="relative min-h-screen bg-base9-black overflow-hidden pt-[104px] flex flex-col">
+      className="relative min-h-screen bg-base9-black overflow-hidden flex flex-col" style={{ paddingTop: "104px" }}>
 
       {/* ── Background layers ── */}
 
