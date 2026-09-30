@@ -14,7 +14,7 @@ const ThreeViewer = lazy(() => import("@/components/shop/ThreeViewer"));
 
 export default function ProductDetail({ product }: { product: Product }) {
   const [showBack, setShowBack] = useState(false);
-  const [show3D, setShow3D] = useState(false);
+  const [show3D, setShow3D] = useState(true);  // 3D on by default
   const [selectedSize, setSelectedSize] = useState(product.sizes[1] ?? product.sizes[0]);
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [added, setAdded] = useState(false);
@@ -42,7 +42,7 @@ export default function ProductDetail({ product }: { product: Product }) {
 
           {/* Left — Image viewer */}
           <div className="lg:col-span-7">
-            <div className="relative bg-base9-gray-100 aspect-[4/5] overflow-hidden">
+            <div className={`relative overflow-hidden aspect-[4/5] transition-colors duration-500 ${show3D ? "bg-base9-black" : "bg-base9-gray-100"}`}>
               {show3D ? (
                 <Suspense
                   fallback={

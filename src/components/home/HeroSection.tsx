@@ -27,7 +27,7 @@ interface Props {
 
 export default function HeroSection({ product, label = "Featured Drop" }: Props) {
   const [showBack, setShowBack] = useState(false);
-  const [show3D,   setShow3D]   = useState(false);  // default off until 3D is stable
+  const [show3D,   setShow3D]   = useState(true);   // 3D on by default
   const [loaded,   setLoaded]   = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
