@@ -140,19 +140,22 @@ export default function ThreeViewer({ frontImage, backImage, modelUrl = "/models
           async (gltf: any) => {
             const model = gltf.scene;
 
-            // Centre + scale
+            // Centre + scale — BIGGER (2.8 instead of 2.0)
             const box    = new THREE.Box3().setFromObject(model);
             const size   = box.getSize(new THREE.Vector3());
             const centre = box.getCenter(new THREE.Vector3());
-            const scale  = 2.0 / Math.max(size.x, size.y, size.z);
+            const scale  = 2.8 / Math.max(size.x, size.y, size.z);
             model.scale.setScalar(scale);
             model.position.set(-centre.x*scale, -centre.y*scale, -centre.z*scale);
 
-            // Camera distance
+            // Camera — tighter to fill the container
             const scaledMax = Math.max(size.x, size.y) * scale;
-            camera.position.z = (scaledMax / 2) / Math.tan(THREE.MathUtils.degToRad(35/2)) * 1.4;
+            camera.position.z = (scaledMax / 2) / Math.tan(THREE.MathUtils.degToRad(35/2)) * 1.1;
             camera.lookAt(0, 0, 0);
             camera.updateProjectionMatrix();
+
+            // Start facing FRONT (π rotation so front faces camera)
+            model.rotation.y = Math.PI;
 
             // Apply design texture if built successfully
             if (customTexDataUrl) {
@@ -177,7 +180,7 @@ export default function ThreeViewer({ frontImage, backImage, modelUrl = "/models
 
             // Interaction
             let dragging=false, prevX=0, prevY=0, velY=0;
-            let tY=0, tX=0, cY=0, cX=0, auto=true;
+            let tY=Math.PI, tX=0, cY=Math.PI, cX=0, auto=true; // start at front (π)
             const centreY = centre.y * scale;
 
             const dn = (x:number,y:number) => { dragging=true; auto=false; velY=0; prevX=x; prevY=y; };
