@@ -124,9 +124,17 @@ export default function ThreeViewer({ frontImage, backImage, modelUrl = "/models
           [ 0, -2, -3, 0.5], [ 0,  3, -4, 0.7]] as [number,number,number,number][])
           .forEach(([x,y,z,i]) => { const l = new THREE.DirectionalLight(0xffffff, i); l.position.set(x,y,z); l.castShadow=true; scene.add(l); });
 
-        // Build composite texture if product image provided
+        // Only composite if we have a design image AND it's not a full product photo
+        // A design image typically ends in .png (has transparency for clean compositing)
+        // Full product JPG photos look bad when re-mapped — use model's own textures instead
+        const isDesignImage = frontImage && (
+          frontImage.toLowerCase().includes('.png') ||
+          frontImage.toLowerCase().includes('design') ||
+          frontImage.toLowerCase().includes('supabase') // uploaded via admin = design PNG
+        );
+
         let customTexDataUrl = "";
-        if (frontImage) {
+        if (isDesignImage) {
           setMsg("Applying design...");
           try {
             customTexDataUrl = await buildCompositeTexture("/models/jacket_base_texture.jpg", frontImage);
@@ -180,7 +188,10 @@ export default function ThreeViewer({ frontImage, backImage, modelUrl = "/models
 
             // Interaction
             let dragging=false, prevX=0, prevY=0, velY=0;
-            let tY=Math.PI, tX=0, cY=Math.PI, cX=0, auto=true; // start at front (π)
+            // Start at π so front faces the camera (model exported back-first from Sketchfab)
+            let tY=Math.PI, tX=0, cY=Math.PI, cX=0, auto=true;
+            // Initial rotation applied before animation starts
+            model.rotation.y = Math.PI;
             const centreY = centre.y * scale;
 
             const dn = (x:number,y:number) => { dragging=true; auto=false; velY=0; prevX=x; prevY=y; };
@@ -199,7 +210,7 @@ export default function ThreeViewer({ frontImage, backImage, modelUrl = "/models
             const tick = () => {
               frame = requestAnimationFrame(tick);
               const t = clock.getElapsedTime();
-              if(auto)          { tY+=0.003; }
+              if(auto)          { tY+=0.002; }  // slower auto-rotation
               else if(!dragging){ velY*=0.90; tY+=velY; tX*=0.92; }
               cY+=(tY-cY)*0.07; cX+=(tX-cX)*0.07;
               model.rotation.y=cY; model.rotation.x=cX;
