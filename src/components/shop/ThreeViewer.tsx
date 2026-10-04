@@ -116,7 +116,7 @@ export default function ThreeViewer({ frontImage, backImage, modelUrl = "/models
 
         // Scene + camera
         const scene  = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(35, W / H, 0.001, 1000);
+        const camera = new THREE.PerspectiveCamera(50, W / H, 0.001, 1000); // wider FOV fills frame better
 
         // Lighting
         scene.add(new THREE.AmbientLight(0xffffff, 1.5));
@@ -156,9 +156,9 @@ export default function ThreeViewer({ frontImage, backImage, modelUrl = "/models
             model.scale.setScalar(scale);
             model.position.set(-centre.x*scale, -centre.y*scale, -centre.z*scale);
 
-            // Camera — tighter to fill the container
+            // Camera — tight fit using wide FOV (1.0x = fills frame completely)
             const scaledMax = Math.max(size.x, size.y) * scale;
-            camera.position.z = (scaledMax / 2) / Math.tan(THREE.MathUtils.degToRad(35/2)) * 1.1;
+            camera.position.z = (scaledMax / 2) / Math.tan(THREE.MathUtils.degToRad(50/2)) * 1.05;
             camera.lookAt(0, 0, 0);
             camera.updateProjectionMatrix();
 
@@ -188,10 +188,9 @@ export default function ThreeViewer({ frontImage, backImage, modelUrl = "/models
 
             // Interaction
             let dragging=false, prevX=0, prevY=0, velY=0;
-            // Start at π so front faces the camera (model exported back-first from Sketchfab)
-            let tY=Math.PI, tX=0, cY=Math.PI, cX=0, auto=true;
-            // Initial rotation applied before animation starts
-            model.rotation.y = Math.PI;
+            // Try 0 rotation — Sketchfab models vary, some face front at 0, some at π
+            let tY=0, tX=0, cY=0, cX=0, auto=true;
+            model.rotation.y = 0;
             const centreY = centre.y * scale;
 
             const dn = (x:number,y:number) => { dragging=true; auto=false; velY=0; prevX=x; prevY=y; };
