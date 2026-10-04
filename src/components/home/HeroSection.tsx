@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense, lazy } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, RotateCcw, Box } from "lucide-react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 import { formatPrice } from "@/lib/currency";
 import type { Database } from "@/types/database";
 
 type Product = Database["public"]["Tables"]["products"]["Row"];
-
-const ThreeViewer = lazy(() => import("@/components/shop/ThreeViewer"));
 
 const FALLBACK = {
   name:        "Custom Bomber Jacket",
@@ -27,7 +25,6 @@ interface Props {
 
 export default function HeroSection({ product, label = "Featured Drop" }: Props) {
   const [showBack, setShowBack] = useState(false);
-  const [show3D,   setShow3D]   = useState(true);
   const [loaded,   setLoaded]   = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -39,9 +36,14 @@ export default function HeroSection({ product, label = "Featured Drop" }: Props)
   const sizes      = product?.sizes       ?? FALLBACK.sizes;
 
   useEffect(() => {
-    const t = setTimeout(() => setLoaded(true), 100);
+    const t = setTimeout(() => setLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
+
+  const scrollDown = () => {
+    const next = sectionRef.current?.nextElementSibling as HTMLElement;
+    next?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <section
@@ -49,30 +51,29 @@ export default function HeroSection({ product, label = "Featured Drop" }: Props)
       className="relative min-h-screen bg-base9-black overflow-hidden"
       style={{ paddingTop: "104px" }}
     >
-      {/* Background glow */}
+      {/* Radial glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-base9-red/6 blur-[100px]" />
-        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-base9-gray-800/30 blur-[80px]" />
+        <div className="absolute top-1/2 right-1/3 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-base9-red/5 blur-[120px]" />
       </div>
 
-      {/* Fine grid texture */}
+      {/* Grid texture */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{ backgroundImage: "repeating-linear-gradient(0deg,#fff 0px,transparent 1px,transparent 80px),repeating-linear-gradient(90deg,#fff 0px,transparent 1px,transparent 80px)" }} />
 
-      {/* ── Two-column layout: text left, 3D right ── */}
-      <div className="relative min-h-[calc(100vh-104px)] flex">
+      {/* Main split layout */}
+      <div className="relative min-h-[calc(100vh-104px)] grid grid-cols-1 lg:grid-cols-2">
 
-        {/* LEFT — text panel — 40% width */}
-        <div className="w-full lg:w-[42%] flex flex-col justify-center px-10 lg:px-16 py-16 relative z-10">
+        {/* LEFT — Text */}
+        <div className="flex flex-col justify-center px-10 lg:px-16 py-16 relative z-10">
 
           {/* Label */}
-          <div className={`flex items-center gap-3 mb-6 transition-all duration-600 ${loaded ? "opacity-100" : "opacity-0 translate-y-4"}`}>
-            <div className="w-6 h-px bg-base9-red" />
+          <div className={`flex items-center gap-3 mb-5 transition-all duration-500 ${loaded ? "opacity-100" : "opacity-0 translate-y-3"}`}>
+            <div className="w-5 h-px bg-base9-red" />
             <p className="text-[10px] tracking-[0.4em] uppercase text-base9-gray-500">{label}</p>
           </div>
 
-          {/* Product name — large editorial */}
-          <h1 className="font-display text-[clamp(3.5rem,6vw,7rem)] leading-[0.85] text-base9-white uppercase tracking-tight mb-2">
+          {/* Name */}
+          <h1 className="font-display text-[clamp(3.5rem,6vw,7.5rem)] leading-[0.85] text-base9-white uppercase tracking-tight mb-3">
             {name.split(" ").map((word, i) => (
               <span key={i} className="block overflow-hidden">
                 <span
@@ -85,35 +86,31 @@ export default function HeroSection({ product, label = "Featured Drop" }: Props)
             ))}
           </h1>
 
-          {/* Animated underline */}
-          <div className="h-px bg-base9-gray-800 overflow-hidden mb-8">
-            <div className={`h-full bg-base9-red transition-all duration-1000 delay-600 ${loaded ? "w-full" : "w-0"}`} />
+          {/* Animated red underline */}
+          <div className="h-px bg-base9-gray-800 overflow-hidden mb-7">
+            <div className={`h-full bg-base9-red transition-all duration-1000 delay-500 ${loaded ? "w-full" : "w-0"}`} />
           </div>
 
           {/* Price */}
-          <p className={`text-3xl font-light text-base9-white/50 mb-8 transition-all duration-700 delay-300 ${loaded ? "opacity-100" : "opacity-0 translate-y-4"}`}>
+          <p className={`text-3xl lg:text-4xl font-light text-base9-white/50 mb-8 transition-all duration-700 delay-200 ${loaded ? "opacity-100" : "opacity-0 translate-y-3"}`}>
             {formatPrice(price)}
           </p>
 
           {/* CTAs */}
-          <div className={`flex flex-col gap-3 mb-10 transition-all duration-700 delay-500 ${loaded ? "opacity-100" : "opacity-0 translate-y-4"}`}>
-            <Link
-              href={`/shop/${slug}`}
-              className="group inline-flex items-center justify-between bg-base9-white text-base9-black px-6 py-4 text-xs tracking-ultra-wide uppercase font-medium hover:bg-base9-red hover:text-base9-white transition-all duration-300"
-            >
+          <div className={`flex flex-col gap-3 mb-10 transition-all duration-700 delay-400 ${loaded ? "opacity-100" : "opacity-0 translate-y-3"}`}>
+            <Link href={`/shop/${slug}`}
+              className="group inline-flex items-center justify-between bg-base9-white text-base9-black px-6 py-4 text-xs tracking-ultra-wide uppercase font-medium hover:bg-base9-red hover:text-base9-white transition-all duration-300">
               <span>Shop Now</span>
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link
-              href="/customize"
-              className="inline-flex items-center gap-2 text-xs tracking-ultra-wide uppercase text-base9-gray-500 hover:text-base9-white transition-colors border border-base9-gray-800 hover:border-base9-gray-600 px-6 py-4"
-            >
+            <Link href="/customize"
+              className="inline-flex items-center gap-2 text-xs tracking-ultra-wide uppercase text-base9-gray-500 hover:text-base9-white transition-colors border border-base9-gray-800 hover:border-base9-gray-600 px-6 py-4">
               Customize Yours
             </Link>
           </div>
 
           {/* Specs */}
-          <div className={`space-y-3 border-t border-base9-gray-800 pt-6 transition-all duration-700 delay-700 ${loaded ? "opacity-100" : "opacity-0"}`}>
+          <div className={`space-y-3 border-t border-base9-gray-800 pt-6 transition-all duration-700 delay-600 ${loaded ? "opacity-100" : "opacity-0"}`}>
             {[
               { label: "Material", value: "100% Premium Cotton" },
               { label: "Sizing",   value: sizes.length > 0 ? `${sizes[0]}–${sizes[sizes.length - 1]}` : "S–XXL" },
@@ -126,115 +123,83 @@ export default function HeroSection({ product, label = "Featured Drop" }: Props)
             ))}
           </div>
 
-          {/* Collection details — bottom of left panel */}
-          <div className="mt-auto pt-10 flex items-center gap-6">
-            <div>
-              <p className="text-[9px] tracking-[0.4em] uppercase text-base9-gray-700">Drop</p>
-              <p className="text-base9-white text-xs font-mono mt-0.5">001</p>
-            </div>
-            <div className="w-px h-8 bg-base9-gray-800" />
-            <div>
-              <p className="text-[9px] tracking-[0.4em] uppercase text-base9-gray-700">Year</p>
-              <p className="text-base9-white text-xs font-mono mt-0.5">2026</p>
-            </div>
-            <div className="w-px h-8 bg-base9-gray-800" />
-            <div>
-              <p className="text-[9px] tracking-[0.4em] uppercase text-base9-gray-700">Origin</p>
-              <p className="text-base9-white text-xs font-mono mt-0.5">NG</p>
-            </div>
+          {/* Drop info */}
+          <div className={`mt-auto pt-10 flex items-center gap-6 transition-all duration-700 delay-700 ${loaded ? "opacity-100" : "opacity-0"}`}>
+            {[
+              { label: "Drop", value: "001" },
+              { label: "Year", value: "2026" },
+              { label: "Origin", value: "NG" },
+            ].map((item, i) => (
+              <div key={item.label} className="flex items-center gap-6">
+                <div>
+                  <p className="text-[9px] tracking-[0.4em] uppercase text-base9-gray-700">{item.label}</p>
+                  <p className="text-base9-white text-xs font-mono mt-0.5">{item.value}</p>
+                </div>
+                {i < 2 && <div className="w-px h-8 bg-base9-gray-800" />}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* RIGHT — 3D viewer — 58% width, full height */}
-        <div className="hidden lg:flex flex-col flex-1 relative">
-          {/* The viewer takes the full right column */}
-          <div className="flex-1 relative">
-            {show3D ? (
-              <Suspense fallback={
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="space-y-3 text-center">
-                    <div className="w-10 h-10 border-2 border-base9-red border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-[10px] tracking-widest uppercase text-base9-gray-600">Loading 3D</p>
-                  </div>
+        {/* RIGHT — Product image with flip */}
+        <div className={`relative flex items-center justify-center transition-all duration-1000 delay-100 ${loaded ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
+
+          {/* Decorative ring */}
+          <div className="absolute w-[400px] h-[400px] lg:w-[520px] lg:h-[520px] rounded-full border border-base9-gray-800 animate-spin-slow pointer-events-none opacity-20" />
+          <div className="absolute w-[300px] h-[300px] lg:w-[400px] lg:h-[400px] rounded-full border border-base9-red/10 animate-spin-slow pointer-events-none" style={{ animationDirection: "reverse", animationDuration: "25s" }} />
+          <div className="absolute w-52 h-52 rounded-full bg-base9-red/6 blur-3xl pointer-events-none" />
+
+          {/* Product — large, fills the column */}
+          <div className="relative w-[320px] h-[420px] sm:w-[380px] sm:h-[500px] lg:w-[440px] lg:h-[580px] z-10">
+            <div className="perspective w-full h-full">
+              <div className={`flip-card-inner w-full h-full ${showBack ? "flipped" : ""}`}>
+                <div className="backface-hidden absolute inset-0">
+                  <Image
+                    src={frontImage}
+                    alt={`${name} front`}
+                    fill
+                    className="object-contain drop-shadow-[0_30px_80px_rgba(0,0,0,0.9)]"
+                    priority
+                    sizes="(max-width:768px) 320px,(max-width:1024px) 380px,440px"
+                  />
                 </div>
-              }>
-                {/* Full-height full-width viewer */}
-                <div className="absolute inset-0">
-                  <ThreeViewer frontImage={frontImage} backImage={backImage} />
-                </div>
-              </Suspense>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="perspective w-[460px] h-[560px]">
-                  <div className={`flip-card-inner w-full h-full ${showBack ? "flipped" : ""}`}>
-                    <div className="backface-hidden absolute inset-0">
-                      <Image src={frontImage} alt={`${name} front`} fill
-                        className="object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.9)]"
-                        priority sizes="460px" />
-                    </div>
-                    <div className="backface-hidden rotate-y-180 absolute inset-0">
-                      <Image src={backImage} alt={`${name} back`} fill
-                        className="object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.9)]"
-                        sizes="460px" />
-                    </div>
-                  </div>
+                <div className="backface-hidden rotate-y-180 absolute inset-0">
+                  <Image
+                    src={backImage}
+                    alt={`${name} back`}
+                    fill
+                    className="object-contain drop-shadow-[0_30px_80px_rgba(0,0,0,0.9)]"
+                    sizes="(max-width:768px) 320px,(max-width:1024px) 380px,440px"
+                  />
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Controls at the bottom */}
-          <div className="relative z-20 flex items-center justify-center gap-3 py-4 border-t border-base9-gray-900">
-            {!show3D && (
-              <button
-                onClick={() => setShowBack(!showBack)}
-                className="flex items-center gap-2 text-[10px] tracking-widest uppercase text-base9-gray-500 hover:text-base9-white transition-colors px-4 py-2 border border-base9-gray-800 hover:border-base9-gray-600"
-              >
-                <RotateCcw size={10} />
-                {showBack ? "Front" : "Back"}
-              </button>
-            )}
-            {show3D && (
-              <p className="text-[9px] tracking-widest uppercase text-base9-gray-700">
-                Drag to rotate
-              </p>
-            )}
-            <button
-              onClick={() => setShow3D(!show3D)}
-              className={`flex items-center gap-1.5 text-[10px] tracking-widest uppercase transition-colors px-4 py-2 border ${
-                show3D
-                  ? "text-base9-red border-base9-red/40"
-                  : "text-base9-gray-500 border-base9-gray-800 hover:text-base9-white"
-              }`}
-            >
-              <Box size={10} />
-              {show3D ? "2D View" : "View 3D"}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile — 3D below text */}
-        <div className="lg:hidden absolute inset-x-0 bottom-24 h-64">
-          {show3D ? (
-            <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><div className="w-8 h-8 border-2 border-base9-red border-t-transparent rounded-full animate-spin" /></div>}>
-              <ThreeViewer frontImage={frontImage} backImage={backImage} />
-            </Suspense>
-          ) : (
-            <div className="relative w-full h-full">
-              <Image src={frontImage} alt={name} fill className="object-contain" sizes="100vw" priority />
             </div>
-          )}
+          </div>
+
+          {/* Flip button */}
+          <button
+            onClick={() => setShowBack(!showBack)}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 text-[10px] tracking-widest uppercase text-base9-gray-500 hover:text-base9-white transition-colors px-5 py-2.5 border border-base9-gray-800 hover:border-base9-gray-600 bg-base9-black/60 backdrop-blur-sm z-20"
+          >
+            <RotateCcw size={10} />
+            {showBack ? "View Front" : "View Back"}
+          </button>
+
+          {/* View in 3D hint */}
+          <Link href={`/shop/${slug}`}
+            className="absolute top-8 right-8 text-[9px] tracking-widest uppercase text-base9-gray-700 hover:text-base9-red transition-colors z-20">
+            View in 3D →
+          </Link>
         </div>
       </div>
 
       {/* Bottom bar */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-base9-gray-900 px-10 lg:px-16 py-3 flex items-center justify-between z-10">
-        <p className="text-[9px] tracking-[0.4em] uppercase text-base9-gray-700">
-          Your Vision — Our Craft
-        </p>
-        <p className="text-[9px] tracking-[0.4em] uppercase text-base9-gray-700">
-          BASE<span className="text-base9-red">9</span>
-        </p>
+        <p className="text-[9px] tracking-[0.4em] uppercase text-base9-gray-700">Your Vision — Our Craft</p>
+        <button onClick={scrollDown} className="text-[9px] tracking-widest uppercase text-base9-gray-700 hover:text-base9-white transition-colors">
+          Scroll ↓
+        </button>
+        <p className="text-[9px] tracking-[0.4em] uppercase text-base9-gray-700">BASE<span className="text-base9-red">9</span></p>
       </div>
     </section>
   );
